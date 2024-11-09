@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layout/main}">
+<head>
+<meta charset="UTF-8">
+<meta th:name="_csrf" th:content="${_csrf.token}"/>
+<meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>Gestion de Alycs</title>
+</head>
+<body>
+
+    <th:block layout:fragment="script">
+    	
+		
+		<script th:inline="javascript">
+				var token = /*[[${_csrf.token}]]*/;
+				var header = /*[[${_csrf.headerName}]]*/;
+				var urlAjaxConsulta = /*[[@{/abmalyc/getAlycs}]]*/;
+				var urlAlta = /*[[@{/abmalyc/altaAlyc}]]*/;
+				var urlEditar = /*[[@{/abmalyc/editarAlyc}]]*/;
+				var urlAgregarCotizacion =  /*[[@{/abmalyc/agregarCotizacion}]]*/;
+				var languageDatatable = /*[[@{/Datatables/Spanish.json}]]*/;
+				var nameDatatable = "bandejaABMAlyc"
+				$(document).ready(function() {
+					$('#comisionModal').on('input', function() {
+					const value = parseInt($(this).val());
+					
+					if (value < 1 || value > 100 || isNaN(value)) {
+						$('#comisionError').show();
+						$(this).addClass('is-invalid'); 
+					} else {
+						$('#comisionError').hide(); 
+						$(this).removeClass('is-invalid'); 
+					}
+				});
+					
+					$('#abm-nav').collapse('show');
+					$("#abm-nav li a span:contains('Alycs')").parent().addClass("active");
+					crearTabla();
+
+
+
+					$("#formAlyc").on("submit", function(event) {
+		        	event.preventDefault(); 
+                	var form = $(this);
+                	var url = form.attr("action");
+
+
+                $.ajax({
+					type: "POST",
+					url: url,
+					data: form.serialize(), 
+                    success: function(response) {
+						console.log(response);
+						const {ok, log} = response;
+						var alertColor = ok? "alert-success" : "alert-danger";
+			            var alertMessage = `
+			                <div class="alert ${alertColor} alert-dismissible fade show" role="alert">
+			                    ${log}
+			                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			                </div>
+			            `;
+			            $("#alertContainerModal").html(alertMessage);
+			            if (ok) {
+						 
+							$("#formAlyc input, #formAlyc select, #formAlyc button").prop("disabled", true);
+                				setTimeout(function() {
+								$('#alycModal').modal('hide');
+								$("#formAlyc input, #formAlyc select, #formAlyc button").prop("disabled", false);
+                   				$('#tablaAlyc').DataTable().ajax.reload();
+                			 }, 1500);
+			            } else {
+			            	console.log("no se enviaorn cambios");
+			            
+			            }
+                    },
+                    error: function(xhr, status, error) {
+								console.error("Error al enviar el formulario:", error);
+		            var alertMessage = `
+		                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+		                    Error al enviar el formulario.
+		                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		                </div>
+		            `;
+		            $("#alertContainerModal").html(alertMessage);
+                    },
+                });
+            	});
+		
+				});
+				
+				
+					  
+			
+				
+				function crearTabla(){
+					var tablaAlyc = $('#tablaAlyc').DataTable({
+						"bInfo" : true, //Oculta el "mostrando X de Y registros
+				    	serverSide: true,
+				    	"lengthChange": false,
+                        stateSave: true,
+						 stateSaveCallback: function (settings, data) {
+						 		localStorage.setItem(
+						 			'DataTables_'+nameDatatable,
+						 			JSON.stringify(data)
+						 		);
+						 	},
+						 	stateLoadCallback: function (settings) {
+								$('#loadingModal').modal('show');
+						 		return JSON.parse(localStorage.getItem('DataTables_'+nameDatatable));
+								 $('#loadingModal').modal('hide');
+						 	},
+				    	 ajax: {
+				    		 url: urlAjaxConsulta,
+				    		 "beforeSend": function (xhr) {
+			                       xhr.setRequestHeader(header, token);
+								   	                      
+			                    },
+				    		 type : "POST",
+				    		 "contentType": 'application/json; charset=utf-8',
+				             data: function (d) {
+				            	 var o = $("#busquedaform").formAObjeto();
+				            	 d.formBusqueda = o;
+				            	 return JSON.stringify(d);
+				             },
+				             dataSrc: 'content'
+				         },
+				         columns: [
+							 { data: 'nombre', onclick:"alert(1)"},
+                             { data: 'comision', onclick:"alert(1)"},
+							 {data: 'estado', render: function(data, type, row) {
+									console.log(data);
+								if (data === 'ACTIVO') {
+								
+								return 	`<i class="bi bi-check-circle-fill h3"  style="color:green;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="ACTIVO"></i>`
+								
+								} else {
+								
+									return `<i class="bi bi-dash-circle-fill h3" style="color:red;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="BAJA"></i>`
+								}
+								
+								}}, 
+				             { 
+				                 data: null,
+				                 render: function(data, type, row) {
+			
+									return `
+				                         <a class="d-flex align-items-center justify-content-center" href="#" data-bs-toggle="dropdown">
+				                             <i class="bi bi-three-dots-vertical" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Acciones"></i>
+				                         </a>
+				                         <ul class="dropdown-menu hide" style="">
+				                             <li>
+												<a class="dropdown-item d-flex align-items-center" onclick='editarAlyc(${JSON.stringify(data)})'>
+                                                   <i class="bi bi-clipboard2-check"></i>
+				                                     <span>Editar Alyc</span>
+				                                 </a>
+				                             </li>
+                                             <li>
+												<a class="dropdown-item d-flex align-items-center" onclick='editarCotizaciones(${JSON.stringify(data)})'>
+                                                   <i class="bi bi-clipboard2-check"></i>
+				                                     <span>Editar Cotizaciones</span>
+				                                 </a>
+				                             </li>
+				                         </ul>
+				                     `;
+								 }
+				             },
+				             
+				         ],
+                         language: {
+				            url: languageDatatable
+				          },
+				          searching: false,
+				          ordering: false,
+				          //Remueve estos tipos de class que dataTable agrega automáticamente
+				          drawCallback: function () {
+				              $("#tablaAlyc").removeClass("no-footer");
+				              //Poner los tooltip
+				              $('[data-bs-toggle="tooltip"]').tooltip()
+				          },
+				        });	
+
+                        // accion al clickear sobre uno de los roles
+						var tablaAlyc = $('#tablaAlyc').DataTable();
+						tablaAlyc.on('click', 'td:not(:last-child)', function () {
+						var fila = tablaAlyc.row($(this).closest('tr')).data();
+			
+					    editarMoneda(fila);
+					
+
+
+					})
+                    tablaAlyc.on('processing.dt', function(e, settings, processing) {
+		
+								if (processing) {
+								$('#loadingModal').modal('show');
+							} else {
+								$('#loadingModal').modal('hide');
+							}
+								
+						    });
+				}
+				
+				function editarAlyc(alyc){
+					const {idAlyc, nombre, comision, estado} = alyc;
+					$( "div" ).remove( ".alert" );
+					limpiarCamposModal();
+					$("#idModal").val(idAlyc);
+					$('#nombreModal').val(nombre);
+					$('#comisionModal').val(comision);
+					$("#estadoModal").val(estado);
+					$("#alycModalLabel").text(`Editar Alyc ${nombre}`);
+        			$("#formAlyc button[type=submit]").text("Editar");
+        			$("#formAlyc").attr("action", urlEditar);
+					$('#alycModal').modal('show');
+				}
+                
+				function editarCotizaciones(alyc) {
+				const { idAlyc, nombre, cotizaciones } = alyc;
+				$('#idAlycCotizaciones').val(idAlyc); 
+				$('#cotizacionesModalLabel').text(`Editar Cotizaciones para Alyc ${nombre}`);
+				$("#cotizacionesContainer").empty(); 
+
+		
+				cotizaciones.forEach((cotizacion, index) => {
+					$("#cotizacionesContainer").append(`
+						<div class="cotizacion-item mb-2">
+							<span>Cotización ${index + 1}: Monto - ${cotizacion.monto}, Fecha - ${cotizacion.fecha}</span>
+						</div>
+					`);
+				});
+
+				$('#cotizacionesModal').modal('show');
+			}
+
+
+			function agregarCotizacion() {
+				const monto = $("#montoCotizacion").val();
+				const moneda = $("#monedaCotizacion").val();
+
+				if (moneda && monto) {
+					$.ajax({
+						type: "POST",
+						url: urlAgregarCotizacion, 
+						data: JSON.stringify({ monto, fecha }),
+						contentType: "application/json",
+						beforeSend: function (xhr) {
+							xhr.setRequestHeader(header, token);
+						},
+						success: function (response) {
+							const { ok, log } = response;
+							if (ok) {
+								$("#cotizacionesContainer").append(`
+									<div class="cotizacion-item mb-2">
+										<span> Monto - ${monto}, Fecha - ${fecha}</span>
+									</div>
+								`);
+								$("#montoCotizacion, #fechaCotizacion").val(""); // Limpiar los campos de entrada
+							} else {
+								alert("Error al agregar la cotización: " + log);
+							}
+						},
+						error: function (xhr, status, error) {
+							alert("Error al agregar la cotización.");
+						}
+					});
+				} else {
+					alert("Debe completar todos los campos.");
+				}
+			}
+
+				
+				function buscar(){
+				    var tablaAlyc = $('#tablaAlyc').DataTable();
+				    tablaAlyc.off('click', 'td:not(:last-child)');
+					tablaAlyc.state.clear();
+				    tablaAlyc.destroy();
+				    crearTabla();
+					borrarTooltips();
+				}
+				
+				function  crear(){
+					$( "div" ).remove( ".alert" );
+					limpiarCamposModal();
+					$("#alycModalLabel").text(`Cargar Alyc`);
+        			$("#formAlyc button[type=submit]").text("Cargar");
+        			$("#formAlyc").attr("action", urlAlta);
+					$('#alycModal').modal('show');
+				}
+				
+				function limpiarCamposModal(){
+					$("#idModal").val("");
+					$('#nombreModal').val("");
+					$('#comisionModal').val("");
+					$("#estadoModal").val($("#estadoModal option:first").val());
+				}
+				
+
+	        	
+	        	function reloadPage() {
+    				window.location.reload();
+				}
+	        	
+	        	//Por como están generados los tooltips, si no se hace esto quedan fijos hasta hacer un click
+	        	function borrarTooltips(){
+	        		 $('[data-bs-toggle="tooltip"]').tooltip('hide');
+	        	}
+
+	        	
+				
+	</script>
+	</th:block>
+
+  <div layout:fragment="content">
+	
+    <form action="#" th:object="${busquedaForm}" method="post" id="busquedaform" enctype="multipart/form-data">
+        <input type="hidden" name="idTicker" id="idTicker" th:field="*{idAlyc}" class="form-control">
+		<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+		<div class="pagetitle d-flex justify-content-between align-items-center">
+			<h1 style="display: inline;">Alycs</h1>
+			<span data-bs-toggle="tooltip" title="Crear Alyc" data-bs-placement="left"  ><i class="bi bi-plus-circle-fill h3 me-3" id="crearBtn"  onclick="crear()" style="color: #02206a; cursor: pointer;" ></i></span>
+		  </div>
+   <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="search-card">
+              <div class="accordion accordion-flush" id="accordionFlushExample">
+                <div class="accordion-item">
+                  <div class="row accordion-header" id="flush-headingOne">
+                    <div class="col-lg-12">
+                      <table width="100%">
+                        <tbody><tr>
+                          	<td width="*"><input type="text" class="search-input" id="inputUsername" placeholder="Buscar Alyc" th:field="*{nombre}"></td>
+                          	<td width="36px" style="text-align: right;"><button type="button" class="btn search-button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Buscar" onclick="buscar()"><i class="bi bi-search" style="font-size: 1.2rem;"></i></button></td>
+                          	<td width="36px" style="text-align: right;"><button type="reset" class="btn search-button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Nueva Búsqueda" onclick="reloadPage()"><i class="bi bi-eraser" style="font-size: 1.2rem;"></i></button></td>
+							<td width="36px"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne"></button></td>
+                        </tr>
+                      </tbody></table>
+                    </div>
+                  </div>
+                  <!--Busqueda avanzada-->
+                  <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                    <div class="accordion-body">
+                      <div class="row">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>            
+          </div>
+        </div>
+      </div>
+
+    </section>
+    <section class="section">
+    <div class="row"><!--  inicio row tabla -->
+     <div class="col-lg-12">
+      <div class="card" ><!-- inicio card -->	
+		<div class="card-body" id="containerResultados">
+			<div class="row">
+                <div class="col-10 col-md-6">
+                  <h5 class="card-title">Lista de Alycs</h5>
+                </div>
+          	</div>
+			  <div id="alertContainer" class="mb-3"></div>
+		  <table id="tablaAlyc" class="table-sm table table-hover table" style="width:100%">
+		   <thead>
+            <tr>
+
+				<th scope="col">Nombre</th>
+				<th scope="col">Comision(%)</th>
+				<th scope="col">Estado</th>
+				<th scope="col">&nbsp;</th>
+            </tr>
+	       </thead>
+     	   <tbody>     
+		   	</tbody>
+		 </table>
+		  
+    	</div><!-- fin container resultados -->
+      </div>
+     </div><!-- fin col -->
+    </div> <!-- fin row -->
+    </section>
+    </form>
+<div class="modal" id="loadingModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+	  <div class="modal-content">
+		<div class="modal-body text-center">
+		  <div class="spinner-border text-primary" role="status">
+	
+		  </div>
+	  <p>Cargando...</p>
+		</div>
+	  </div>
+	</div>
+ </div>
+
+<!-- Modal Editar Cotizaciones -->
+<div class="modal fade" id="cotizacionesModal" tabindex="-1" aria-labelledby="cotizacionesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cotizacionesModalLabel">Editar Cotizaciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Contenedor para las cotizaciones existentes -->
+                <div id="cotizacionesContainer">
+                    <!-- Las cotizaciones se cargarán aquí dinámicamente -->
+                </div>
+                
+                <!-- Formulario para agregar una nueva cotización -->
+                <form id="formNuevaCotizacion">
+					<input type="hidden" name="idAlyc" id="idAlycCotizaciones">
+					<div class="col-md-12">
+						<label for="monedaCotizacion" class="form-label">Tipo de Moneda</label>
+						<select id="monedaCotizacion" name="monedaCotizacion" class="form-select">
+							<option th:each="m : ${monedas}" th:value="${m}" th:text="${m.nombre}"></option>
+						</select>
+					</div>
+                    <div class="col-md-12">
+                        <label for="montoCotizacion" class="form-label">Monto de Cotización</label>
+                        <input type="number" min="0" class="form-control" id="montoCotizacion" name="montoCotizacion" required>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="agregarCotizacion()">Agregar Cotización</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+ 
+ <div class="modal fade" id="alycModal" tabindex="-1" role="dialog" aria-labelledby="alycModalLabel" aria-hidden="true" data-bs-backdrop="static">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 style="color:#012970;" class="modal-title" id="alycModalLabel">Titulo modal</h4>
+			</div>
+			<div class="modal-body">
+				<div id="alertContainerModal" class="mb-3"></div>
+				<form action="#" th:object=" ${formCreacionEditar}" method="post" id="formAlyc" class="row g-3" enctype="multipart/form-data">
+					<input type="hidden" id="idModal" th:field="*{idAlyc}" class="form-control">
+					<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+					<div class="col-md-12">
+						<input type="text" class="form-control" id="nombreModal" th:field="*{nombre}" placeholder="Alyc" maxlength="100" autocomplete="off" title="Debe indicar el nombre de la Alyc" required>
+					</div>
+					<div class="col-md-12">
+						<input type="number" class="form-control" id="comisionModal" th:field="*{comision}" placeholder="% de Comision" maxlength="3" autocomplete="off" title="Debe indicar la comision de la Alyc" required min="0" max="100">
+						<span id="comisionError" style="color: red; display: none;">Debe elegir un número entre 0 y 100.</span>
+					</div>
+                    <div class="col-md-12">
+						<select id="estadoModal" name="estadoModal" class="form-select" th:field="*{estado}">
+							<option th:each="e : ${estadosSeleccionables}" th:value="${e}" th:text="${e.name()}">Estados</option>
+						</select>
+					</div>
+					
+					<div class="text-center">
+						<button type="submit" class="btn btn-primary"  id="btnsubmit">Texto del boton submit</button>
+						<button type="reset" class="btn btn-secondary">Limpiar</button>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" id="btnclose" data-bs-dismiss="modal">Cerrar</button>
+			</div>
+		</div>
+	</div>
+</div>
+    </div>
+</body>
+</html>

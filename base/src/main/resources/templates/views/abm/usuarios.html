@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layout/main}">
+<head>
+<meta charset="UTF-8">
+<meta th:name="_csrf" th:content="${_csrf.token}"/>
+<meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>Gestión de Usuarios</title>
+</head>
+<body>
+
+    <th:block layout:fragment="script">
+    	
+		
+		<script th:inline="javascript">
+				var token = /*[[${_csrf.token}]]*/;
+				var header = /*[[${_csrf.headerName}]]*/;
+				var urlAjaxConsulta = /*[[@{/abmusuarios/getUsuarios}]]*/;
+				var urlAlta = /*[[@{/abmusuarios/altaUsuario}]]*/;
+				var languageDatatable = /*[[@{/Datatables/Spanish.json}]]*/;
+				var nameDatatable = "bandejaABMUsuario"
+				$(document).ready(function() {
+					
+					//Expande la sidebar y le pinta el circulito a la opción de ingresadas
+					$('#abm-nav').collapse('show');
+					$("#abm-nav li a span:contains('Usuarios')").parent().addClass("active");
+					crearTabla();
+
+
+
+					$("#formUsuario").on("submit", function(event) {
+		        	event.preventDefault(); 
+                	var form = $(this);
+                	var url = form.attr("action");
+
+
+                $.ajax({
+					type: "POST",
+					url: url,
+					data: form.serialize(), 
+                    success: function(response) {
+						console.log(response);
+						const {ok, log} = response;
+						var alertColor = ok? "alert-success" : "alert-danger";
+			            var alertMessage = `
+			                <div class="alert ${alertColor} alert-dismissible fade show" role="alert">
+			                    ${log}
+			                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			                </div>
+			            `;
+			            $("#alertContainerModal").html(alertMessage);
+			            if (ok) {
+						 
+							$("#formUsuario input, #formUsuario select, #formUsuario button").prop("disabled", true);
+                				setTimeout(function() {
+								$('#usuarioModal').modal('hide');
+								$("#formUsuario input, #formUsuario select, #formUsuario button").prop("disabled", false);
+                   				$('#tablaUsuarios').DataTable().ajax.reload();
+                			 }, 1500);
+			            } else {
+			            	console.log("no se enviaorn cambios");
+			            
+			            }
+                    },
+                    error: function(xhr, status, error) {
+								console.error("Error al enviar el formulario:", error);
+		            var alertMessage = `
+		                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+		                    Error al enviar el formulario.
+		                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		                </div>
+		            `;
+		            $("#alertContainerModal").html(alertMessage);
+                    },
+                });
+            	});
+		
+				});
+				
+				
+					  
+			
+				
+				function crearTabla(){
+					var tablaUsuarios = $('#tablaUsuarios').DataTable({
+						"bInfo" : true, //Oculta el "mostrando X de Y registros
+				    	serverSide: true,
+				    	"lengthChange": false,
+                        stateSave: true,
+						 stateSaveCallback: function (settings, data) {
+						 		localStorage.setItem(
+						 			'DataTables_'+nameDatatable,
+						 			JSON.stringify(data)
+						 		);
+						 	},
+						 	stateLoadCallback: function (settings) {
+								$('#loadingModal').modal('show');
+						 		return JSON.parse(localStorage.getItem('DataTables_'+nameDatatable));
+								 $('#loadingModal').modal('hide');
+						 	},
+				    	 ajax: {
+				    		 url: urlAjaxConsulta,
+				    		 "beforeSend": function (xhr) {
+			                       xhr.setRequestHeader(header, token);
+								   	                      
+			                    },
+				    		 type : "POST",
+				    		 "contentType": 'application/json; charset=utf-8',
+				             data: function (d) {
+				            	 var o = $("#busquedaform").formAObjeto();
+				            	 d.formBusqueda = o;
+				            	 return JSON.stringify(d);
+				             },
+				             dataSrc: 'content'
+				         },
+				         columns: [
+							 { data: 'username', onclick:"alert(1)"},
+							 { data: 'email'},
+							 { data: 'rol' },
+							 {data: 'estado', render: function(data, type, row) {
+				;
+								if (data === 'ACTIVO') {
+								
+								return 	`<i class="bi bi-check-circle-fill h3"  style="color:green;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="ACTIVO"></i>`
+								} else {
+								
+									return `<i class="bi bi-dash-circle-fill h3" style="color:red;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="BAJA"></i>`
+								}
+								
+								}}, 
+				             { 
+				                 data: null,
+				                 render: function(data, type, row) {
+				                     return `
+				                         <a class="d-flex align-items-center justify-content-center" href="#" data-bs-toggle="dropdown">
+				                             <i class="bi bi-three-dots-vertical" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Acciones"></i>
+				                         </a>
+				                         <ul class="dropdown-menu hide" style="">
+				                             <li>
+												<a class="dropdown-item d-flex align-items-center" onclick='intentarEditar(${JSON.stringify(data)})'>
+                                                   <i class="bi bi-clipboard2-check"></i>
+				                                     <span>Editar</span>
+				                                 </a>
+				                             </li>
+				                         </ul>
+				                     `;
+				                 },
+				             },
+				             
+				         ],
+                         language: {
+				            url: languageDatatable
+				          },
+				          searching: false,
+				          ordering: false,
+				          //Remueve estos tipos de class que dataTable agrega automáticamente
+				          drawCallback: function () {
+				              $("#tablaUsuarios").removeClass("no-footer");
+				              //Poner los tooltip
+				              $('[data-bs-toggle="tooltip"]').tooltip()
+				          },
+				        });	
+
+                        // accion al clickear sobre uno de los roles
+						var tablaUsuarios = $('#tablaUsuarios').DataTable();
+						tablaUsuarios.on('click', 'td:not(:last-child)', function () {
+						var fila = tablaUsuarios.row($(this).closest('tr')).data();
+						procesar(fila);
+
+					})
+							tablaUsuarios.on('processing.dt', function(e, settings, processing) {
+		
+								if (processing) {
+								$('#loadingModal').modal('show');
+							} else {
+								$('#loadingModal').modal('hide');
+							}
+								
+						    });
+				}
+				
+				function intentarEditar(usuario){
+					const {username, email, estado, apellido, nombre, id} = usuario;
+					console.log(usuario);
+					let urlVista = /*[[@{/abmusuarios/editarUsuario}]]*/;
+					$( "div" ).remove( ".alert" );
+					limpiarCamposModal();
+					$("#usuarioModalLabel").text("Editar Usuario");
+        			$("#formUsuario button[type=submit]").text("Editar");
+        			$("#formUsuario").attr("action", urlVista);
+					$('#username').val(username);
+					$('#email').val(email);
+					$('#estado').val(estado);
+					$('#apellido').val(apellido);
+					$('#nombre').val(nombre);
+					$('#idUsuario').val(id);
+					$('#usuarioModal').modal('show');
+			
+				}
+
+				
+				function buscar(){
+				    var tablaUsuarios = $('#tablaUsuarios').DataTable();
+				    tablaUsuarios.off('click', 'td:not(:last-child)');
+					tablaUsuarios.state.clear();
+				    tablaUsuarios.destroy();
+				    crearTabla();
+					borrarTooltips();
+				}
+				
+				function crear(){
+					let urlVista = /*[[@{/abmusuarios/altaUsuario}]]*/;
+					$( "div" ).remove( ".alert" );
+					limpiarCamposModal();
+					$("#usuarioModalLabel").text("Crear Usuario");
+        			$("#formUsuario button[type=submit]").text("Crear");
+        			$("#formUsuario").attr("action", urlVista);
+					$('#usuarioModal').modal('show');
+				}
+				
+				function limpiarCamposModal(){
+					$("#username").val("");
+					$('#email').val("");
+					$('#apellido').val("");
+					$('#nombre').val("");
+	            	$("#estado").val($("#estado option:first").val());
+	            	$('#idUsuario').val("");
+				}
+				
+
+	        	
+	        	function reloadPage() {
+    				window.location.reload();
+				}
+	        	
+	        	//Por como están generados los tooltips, si no se hace esto quedan fijos hasta hacer un click
+	        	function borrarTooltips(){
+	        		 $('[data-bs-toggle="tooltip"]').tooltip('hide');
+	        	}
+
+	        	
+				
+	</script>
+	</th:block>
+
+  <div layout:fragment="content">
+	
+    <form action="#" th:object="${busquedaForm}" method="post" id="busquedaform" enctype="multipart/form-data">
+        <input type="hidden" name="id" id="id" th:field="*{id}" class="form-control">
+		<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+   <div class="pagetitle d-flex justify-content-between align-items-center">
+      <h1 style="display: inline;">Usuarios</h1>
+      <span data-bs-toggle="tooltip" title="Crear Usuario" data-bs-placement="left"  ><i class="bi bi-plus-circle-fill h3 me-3" id="crearBtn"  onclick="crear()" style="color: #02206a; cursor: pointer;" ></i></span>
+    </div>
+   <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="search-card">
+              <div class="accordion accordion-flush" id="accordionFlushExample">
+                <div class="accordion-item">
+                  <div class="row accordion-header" id="flush-headingOne">
+                    <div class="col-lg-12">
+                      <table width="100%">
+                        <tbody><tr>
+                          	<td width="*"><input type="text" class="search-input" id="inputUsername" placeholder="Buscar Usuario" th:field="*{username}"></td>
+                          	<td width="36px" style="text-align: right;"><button type="button" class="btn search-button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Buscar" onclick="buscar()"><i class="bi bi-search" style="font-size: 1.2rem;"></i></button></td>
+                          	<td width="36px" style="text-align: right;"><button type="reset" class="btn search-button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Nueva Búsqueda" onclick="reloadPage()"><i class="bi bi-eraser" style="font-size: 1.2rem;"></i></button></td>
+							<td width="36px"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne"></button></td>
+                        </tr>
+                      </tbody></table>
+                    </div>
+                  </div>
+                  <!--Busqueda avanzada-->
+                  <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample" style="">
+                    <div class="accordion-body">
+                      <div class="row">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>            
+          </div>
+        </div>
+      </div>
+
+    </section>
+    <section class="section">
+    <div class="row"><!--  inicio row tabla -->
+     <div class="col-lg-12">
+      <div class="card" ><!-- inicio card -->	
+		<div class="card-body" id="containerResultados">
+			<div class="row">
+                <div class="col-10 col-md-6">
+                  <h5 class="card-title">Lista de Usuarios</h5>
+                </div>
+          	</div>
+			  <div id="alertContainer" class="mb-3"></div>
+		  <table id="tablaUsuarios" class="table-sm table table-hover table" style="width:100%">
+		   <thead>
+            <tr>
+
+				<th scope="col">Username</th>
+<th scope="col">Email</th>
+<th scope="col">Perfil</th>
+<th scope="col">Estado</th>
+				<th scope="col">&nbsp;</th>
+            </tr>
+	       </thead>
+     	   <tbody>     
+		   	</tbody>
+		 </table>
+		  
+    	</div><!-- fin container resultados -->
+      </div>
+     </div><!-- fin col -->
+    </div> <!-- fin row -->
+    </section>
+    </form>
+<div class="modal" id="loadingModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+	  <div class="modal-content">
+		<div class="modal-body text-center">
+		  <div class="spinner-border text-primary" role="status">
+	
+		  </div>
+	  <p>Cargando...</p>
+		</div>
+	  </div>
+	</div>
+ </div>
+ 
+ <div class="modal fade" id="usuarioModal" tabindex="-1" role="dialog" aria-labelledby="usuarioModalLabel" aria-hidden="true" data-bs-backdrop="static">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 style="color:#012970;" class="modal-title" id="usuarioModalLabel">Titulo modal</h4>
+			</div>
+			<div class="modal-body">
+				<div id="alertContainerModal" class="mb-3"></div>
+				<form action="#" th:object=" ${formCreacionEditar}" method="post" id="formUsuario" class="row g-3" enctype="multipart/form-data">
+					<input type="hidden" id="idUsuario" th:field="*{id}" class="form-control">
+					<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+					<div class="col-md-12">
+						<input type="text" class="form-control" id="apellido" th:field="*{apellido}" placeholder="Apellido" autocomplete="off" maxlength="255" title="Debe indicar el apellido del Usuario" required>
+					</div>
+					<div class="col-md-12">
+						<input type="text" class="form-control" id="nombre" th:field="*{nombre}" placeholder="Nombre" autocomplete="off" maxlength="255" title="Debe indicar el nombre del Usuario" required>
+					</div>
+					<div class="col-md-12">
+						<input type="text"  class="form-control" id="username" th:field="*{username}" placeholder="Username" title="Debe indicar el username del Usuario" autocomplete="off" required>
+					</div>
+					<div class="col-md-12">
+						<input type="email"  class="form-control" id="email" th:field="*{email}" placeholder="Email" title="Debe indicar el email del Usuario" autocomplete="off" required>
+					</div>
+					<div class="col-md-12">
+						<select id="estado" name="estado" class="form-select" th:field="*{estado}">
+							<option th:each="e : ${estadosSeleccionables}" th:value="${e}" th:text="${e.name()}">Estados</option>
+						</select>
+					</div>
+					<div class="col-md-12">
+						<select id="estado" name="estado" class="form-select" th:field="*{idRol}">
+							<option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.descripcion}">Roles</option>
+						</select>
+					</div>
+					<div class="text-center">
+						<button type="submit" class="btn btn-primary"  id="btnsubmit">Texto del boton submit</button>
+						<button type="reset" class="btn btn-secondary">Limpiar</button>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" id="btnclose" data-bs-dismiss="modal">Cerrar</button>
+			</div>
+		</div>
+	</div>
+</div>
+    </div>
+</body>
+</html>

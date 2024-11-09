@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Restablecer Contraseña</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <h2 class="text-center">Restablecer Contraseña</h2>
+                <form th:action="@{/restablecer-password}" method="post">
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Enviar Contraseña Provisional</button>
+                </form>
+
+                <div th:if="${message}" class="alert alert-success mt-3">
+                    <span th:text="${message}"></span>
+                </div>
+                <div th:if="${error}" class="alert alert-danger mt-3">
+                    <span th:text="${error}"></span>
+                </div>
+
+                <!-- Enlace para volver al login -->
+                <div class="text-center mt-3">
+                    <a th:href="@{/login}">Volver al Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

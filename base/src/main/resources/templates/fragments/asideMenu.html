@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" 	xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	>
+	
+
+
+
+
+
+<head>
+	<meta charset="UTF-8">
+</head>
+
+<body>
+
+
+	<aside id="sidebar" class="sidebar" th:fragment="asideMenu">
+	<ul class="sidebar-nav" id="sidebar-nav">
+
+ 
+   
+      
+       <li class="nav-item">
+        <div sec:authorize="hasAnyAuthority('ADMIN', 'USER')">
+        <a class="nav-link collapsed" data-bs-target="#op-nav" data-bs-toggle="collapse" href="#" aria-expanded="false">
+          <i class="bi bi-menu-button-wide"></i><span>Operaciones</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        
+        <ul id="op-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav" style="">
+          <li>
+            <a th:href="@{/operaciones/bandeja}">
+              <i class="bi bi-circle"></i><span>Registrar</span>
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/conciliacion/bandeja}">
+              <i class="bi bi-circle"></i><span>Conciliar</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://docs.google.com/spreadsheets/d/18Fh1O76amTTeO160DxaeneMtvWREQn0i/edit?gid=1204764743#gid=1204764743" target="_blank" >
+              <i class="bi bi-circle"></i><span>Calculadoras Financieras</span>
+            </a>
+          </li>
+
+        </ul>
+        </div>
+      </li><!-- End Components Nav -->
+      
+      
+
+      <li class="nav-item">
+        <div sec:authorize="hasAnyAuthority('ADMIN')">
+        <a class="nav-link collapsed" data-bs-target="#abm-nav" data-bs-toggle="collapse" href="#" aria-expanded="false">
+          <i class="bi bi-menu-button-wide"></i><span>ABM</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        
+        <ul id="abm-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav" style="">
+          <li>
+            <a th:href="@{/abmusuarios/bandeja}">
+              <i class="bi bi-circle"></i><span>Usuarios</span>
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/abmalyc/bandeja}">
+              <i class="bi bi-circle"></i><span>Alycs</span>
+            </a>
+          </li>
+           <li>
+               <a th:href="@{/abmplantillas/bandeja}">
+              <i class="bi bi-circle"></i><span>Plantillas</span>
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/abmmoneda/bandeja}">
+              <i class="bi bi-circle"></i><span>Moneda</span>
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/abmticker/bandeja}">
+              <i class="bi bi-circle"></i><span>Ticker</span>
+            </a>
+          </li>
+          <li>
+            <a th:href="@{/abmplazo/bandeja}">
+              <i class="bi bi-circle"></i><span>Plazo</span>
+            </a>
+          </li>
+        </ul>
+        </div>
+      </li><!-- End Components Nav -->
+
+      
+    </ul>
+
+	</aside><!-- End Sidebar-->
+
+</body>
+
+</html>

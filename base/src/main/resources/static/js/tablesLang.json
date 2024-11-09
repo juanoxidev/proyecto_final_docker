@@ -1,0 +1,23 @@
+{
+						        	
+	"lengthMenu": "Mostrar _MENU_ registros por p&aacute;gina",
+    "zeroRecords": "No se encontraron resultados",
+    "info": "_MAX_ Resultados encontrados. Mostrando pagina _PAGE_ de _PAGES_ ",
+    "infoEmpty": "No se encontraron resultados",
+    "emptyTable": " Sin resultados para mostrar ",
+     "infoFiltered": "(Filtrando _MAX_ total resultados)",
+	 "processing":     "Procesando...",
+     "search":         "Buscar:",
+     "infoPostFix":    "",
+     "loadingRecords": "Cargando registros...",
+     "paginate": {
+        "first":      "Primer",
+        "previous":   "Anterior",
+        "next":       "Siguiente",
+        "last":       "Ultimo"
+     },
+     "aria": {
+        "sortAscending":  ": activas orden ascendente",
+        "sortDescending": ": activas orden descendente"
+     }
+ }

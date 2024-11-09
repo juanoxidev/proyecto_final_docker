@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{layout/main}">
+<head>
+<meta charset="UTF-8">
+<meta th:name="_csrf" th:content="${_csrf.token}"/>
+<meta th:name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>Conciliacion</title>
+</head>
+<body>
+
+    <th:block layout:fragment="script">
+    	
+		
+		<script th:inline="javascript">
+				var token = /*[[${_csrf.token}]]*/;
+				var header = /*[[${_csrf.headerName}]]*/;
+				var urlAjaxConsulta =  /*[[@{/conciliacion/getAlycs}]]*/;
+				var languageDatatable = /*[[@{/Datatables/Spanish.json}]]*/;
+				let urlAjaxComparar =  /*[[@{/conciliacion/comparar}]]*/;
+				var nameDatatable = "alycsConciliacion"
+				$(document).ready(function() {
+					
+					//Expande la sidebar y le pinta el circulito a la opción de ingresadas
+					$('#op-nav').collapse('show');
+					$("#op-nav li a span:contains('Conciliar')").parent().addClass("active");
+					crearTabla();
+
+
+
+		
+					       
+					  
+		
+				});
+				
+				function conciliarReportes() {
+		
+				let data = new FormData();
+				let archivoAlyc = $('#file2').prop('files')[0];
+				let idAlyc = $('#idAlycConciliacion').val();
+				let archivoContexto = $('#file1').prop('files')[0];
+				var alertMessage = "";
+    		console.log(archivoAlyc);
+			console.log(idAlyc)
+    		if(validarArchivo(archivoAlyc) && validarArchivo(archivoContexto)) {
+    			data.append("idAlyc",idAlyc);
+        		data.append("alycReporte",archivoAlyc)
+				data.append("contextoReporte",archivoContexto)
+				console.log(data);
+        		$.ajax({
+					type : "POST",
+					beforeSend: function(xhr) {
+						// Aquí configuramos el encabezado CSRF
+						xhr.setRequestHeader(header, token);  // 'header' contiene el nombre del header y 'token' es su valor
+					}, //send CSRF token in header
+					url : urlAjaxComparar,
+					enctype: 'multipart/form-data',
+					data : data,
+					processData: false,  // tell jQuery not to process the data
+					contentType: false,   // tell jQuery not to set contentType
+					xhrFields: {
+                responseType: 'blob'  // Esto es clave para manejar archivos binarios
+            },
+            success: function (data, status, xhr) {
+                // Obtener el nombre del archivo desde los headers si es necesario
+                const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = "reporte_comparacion.xlsx"; // Nombre del archivo
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link); // Remover el enlace después de la descarga
+
+                setTimeout(function() {
+                    $("#uploadModal").modal("hide");
+                    console.log("Operación exitosa");
+                }, 1500);
+            },
+					error : function(e) {
+
+						 alertMessage = `
+								<div class="alert alert-danger alert-dismissible fade show" role="alert">
+									Error al cargar el documento
+									<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+								</div>
+							`;
+							$("#alertContainerModal").html(alertMessage);
+						$("#btnConciliar").removeClass('disabled');
+					}
+				});	
+    			} else{
+						 alertMessage = `
+								<div class="alert alert-danger alert-dismissible fade show" role="alert">
+									ERROR: Debe cargar un archivo
+									<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+								</div>
+							`;
+							$("#alertContainerModal").html(alertMessage);
+    					$("#btnConciliar").removeClass('disabled');
+    			}
+				};
+
+
+				function validarArchivo(archivo) {
+					return archivo != undefined && archivo != null && archivo !="" && archivo.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+				}
+					  
+			
+				
+				function crearTabla(){
+					var tablaAlycs = $('#tablaAlycs').DataTable({
+						"bInfo" : true, //Oculta el "mostrando X de Y registros
+				    	serverSide: true,
+				    	"lengthChange": false,
+                        stateSave: true,
+						 stateSaveCallback: function (settings, data) {
+						 		localStorage.setItem(
+						 			'DataTables_'+nameDatatable,
+						 			JSON.stringify(data)
+						 		);
+						 	},
+						 	stateLoadCallback: function (settings) {
+								$('#loadingModal').modal('show');
+						 		return JSON.parse(localStorage.getItem('DataTables_'+nameDatatable));
+								 $('#loadingModal').modal('hide');
+						 	},
+				    	 ajax: {
+				    		 url: urlAjaxConsulta,
+				    		 "beforeSend": function (xhr) {
+			                       xhr.setRequestHeader(header, token);
+								   	                      
+			                    },
+				    		 type : "POST",
+				    		 "contentType": 'application/json; charset=utf-8',
+				             data: function (d) {
+				            	 var o = $("#busquedaform").formAObjeto();
+				            	 d.formBusqueda = o;
+				            	 return JSON.stringify(d);
+				             },
+				             dataSrc: 'content'
+				         },
+				         columns: [
+							 { data: 'nombre', onclick:"alert(1)"},
+				             { 
+				                 data: null,
+				                 render: function(data, type, row) {
+				                     return `
+				                         <a class="d-flex align-items-center justify-content-center" href="#" data-bs-toggle="dropdown">
+				                             <i class="bi bi-three-dots-vertical" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Acciones"></i>
+				                         </a>
+				                         <ul class="dropdown-menu hide" style="">
+				                             <li>
+												<a class="dropdown-item d-flex align-items-center" onclick='subirArchivos(${JSON.stringify(data)})'>
+                                                   <i class="bi bi-clipboard2-check"></i>
+				                                     <span>Conciliar</span>
+				                                 </a>
+				                             </li>
+				                         </ul>
+				                     `;
+				                 },
+				             },
+				             
+				         ],
+                         language: {
+				            url: languageDatatable
+				          },
+				          searching: false,
+				          ordering: false,
+				          //Remueve estos tipos de class que dataTable agrega automáticamente
+				          drawCallback: function () {
+				              $("#tablaAlycs").removeClass("no-footer");
+				              //Poner los tooltip
+				              $('[data-bs-toggle="tooltip"]').tooltip()
+				          },
+				        });	
+
+                        // accion al clickear sobre uno de los roles
+						var tablaAlycs = $('#tablaAlycs').DataTable();
+						tablaAlycs.on('click', 'td:not(:last-child)', function () {
+						var fila = tablaAlycs.row($(this).closest('tr')).data();
+						subirArchivos(fila);
+
+					})
+						tablaAlycs.on('processing.dt', function(e, settings, processing) {
+		
+								if (processing) {
+								$('#loadingModal').modal('show');
+							} else {
+								$('#loadingModal').modal('hide');
+							}
+								
+						    });
+				}
+				
+
+				
+				function buscar(){
+				    var tablaAlycs = $('#tablaAlycs').DataTable();
+				    tablaAlycs.off('click', 'td:not(:last-child)');
+					tablaAlycs.state.clear();
+				    tablaAlycs.destroy();
+				    crearTabla();
+					borrarTooltips();
+				}
+				
+				// function crear(){
+				// 	let urlVista = /*[[@{/abmusuarios/altaUsuario}]]*/;
+				// 	$( "div" ).remove( ".alert" );
+				// 	limpiarCamposModal();
+				// 	$("#usuarioModalLabel").text("Crear Usuario");
+        		// 	$("#formUsuario button[type=submit]").text("Crear");
+        		// 	$("#formUsuario").attr("action", urlVista);
+				// 	$('#usuarioModal').modal('show');
+				// }
+				
+				function limpiarCamposModal(){
+					$("#alyc").val("");
+
+				}
+				
+				function subirArchivos(alyc){
+					$('#file1').val('');
+					$('#file2').val('');
+				const {nombre, idAlyc} = alyc;
+				$('#uploadModalLabel').text(`Conciliacion de la Alyc ${nombre}`)
+				$('#idAlycConciliacion').val(idAlyc);
+				$('#uploadModal').modal('show');
+				
+				}
+
+	        	
+	        	function reloadPage() {
+    				window.location.reload();
+				}
+	        	
+	        	//Por como están generados los tooltips, si no se hace esto quedan fijos hasta hacer un click
+	        	function borrarTooltips(){
+	        		 $('[data-bs-toggle="tooltip"]').tooltip('hide');
+	        	}
+
+	        	
+				
+	</script>
+	</th:block>
+
+  <div layout:fragment="content">
+	
+    <form action="#" th:object="${busquedaForm}" method="post" id="busquedaform" enctype="multipart/form-data">
+		<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+   <div class="pagetitle d-flex justify-content-between align-items-center">
+      <h1 style="display: inline;">Alycs</h1>
+    </div>
+   <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="search-card">
+              <div class="accordion accordion-flush" id="accordionFlushExample">
+                <div class="accordion-item">
+                  <div class="row accordion-header" id="flush-headingOne">
+                    <div class="col-lg-12">
+                      <table width="100%">
+                        <tbody><tr>
+                        <td width="*">
+						<select id="alyc" name="alyc" class="form-select" th:field="*{idAlyc}">
+							<option value="" selected>Todas</option>
+							<option th:each="a : ${alycs}" th:value="${a.id}" th:text="${a.nombre}">Alycs</option>
+						</select>
+						</td>
+                          	<td width="36px" style="text-align: right;"><button type="button" class="btn search-button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Buscar" onclick="buscar()"><i class="bi bi-search" style="font-size: 1.2rem;"></i></button></td>
+                          	<td width="36px" style="text-align: right;"><button type="reset" class="btn search-button" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Nueva Búsqueda" onclick="reloadPage()"><i class="bi bi-eraser" style="font-size: 1.2rem;"></i></button></td>
+							<td width="36px"><button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne"></button></td>
+                        </tr>
+                      </tbody></table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>            
+          </div>
+        </div>
+      </div>
+
+    </section>
+    <section class="section">
+    <div class="row"><!--  inicio row tabla -->
+     <div class="col-lg-12">
+      <div class="card" ><!-- inicio card -->	
+		<div class="card-body" id="containerResultados">
+			<div class="row">
+                <div class="col-10 col-md-6">
+                  <h5 class="card-title">Lista de Alycs</h5>
+                </div>
+          	</div>
+			  <div id="alertContainer" class="mb-3"></div>
+		  <table id="tablaAlycs" class="table-sm table table-hover table" style="width:100%">
+		   <thead>
+            <tr>
+
+				<th scope="col">Alyc</th>
+
+				<th scope="col">&nbsp;</th>
+            </tr>
+	       </thead>
+     	   <tbody>     
+		   	</tbody>
+		 </table>
+		  
+    	</div><!-- fin container resultados -->
+      </div>
+     </div><!-- fin col -->
+    </div> <!-- fin row -->
+    </section>
+    </form>
+<div class="modal" id="loadingModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+	  <div class="modal-content">
+		<div class="modal-body text-center">
+		  <div class="spinner-border text-primary" role="status">
+		  </div>
+		  <p>Cargando...</p>
+		</div>
+	  </div>
+	</div>
+ </div>
+ 
+ <!-- Modal para cargar archivos -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered ">
+        <div class="modal-content">
+            <form  method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+					<div id="alertContainerModal" class="mb-3"></div>
+					<input type="hidden" id="idAlycConciliacion" class="form-control">
+                    <!-- Campo para el primer archivo -->
+                    <div class="mb-3">
+                        <label for="file1" class="form-label">Archivo Propio (.xlsx)</label>
+                        <input type="file" class="form-control" id="file1" name="file1" accept=".xlsx" required>
+                    </div>
+                    <!-- Campo para el segundo archivo -->
+                    <div class="mb-3">
+                        <label for="file2" class="form-label">Archivo Alyc (.xlsx)</label>
+                        <input type="file" class="form-control" id="file2" name="file2" accept=".xlsx" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+					
+                    <button type="button" class="btn btn-primary" id="btnConciliar" onclick="conciliarReportes()">Conciliar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+ 
+
+    </div>
+</body>
+</html>

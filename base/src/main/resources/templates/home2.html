@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<header th:replace="fragments/headCustom :: headCustom"></header>
+<header th:replace="fragments/header :: header"></header>
+<aside th:replace="fragments/fragments :: asideMenu"></aside>
+    <div th:fragment="content">
+        <div class="container">
+            <h1 class="text-center">Welcome to the Home Page</h1>
+            <p class="text-center">You are logged in!</p>
+            <a th:href="@{/logout}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+</body>
+</html>

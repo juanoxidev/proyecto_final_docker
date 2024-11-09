@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="headCustom">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   
+  <link th:href="@{/img/favicon.png}" rel="shortcut icon" type="image/x-icon">
+  <link th:href="@{/img/apple-touch-icon.png}" rel="apple-touch-icon">
+
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link th:href="@{/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+  <link th:href="@{/bootstrap-icons/bootstrap-icons.css}"  rel="stylesheet">
+  <link th:href="@{/boxicons/css/boxicons.min.css}" rel="stylesheet">
+  
+  <!-- Template Main CSS File -->
+  <link th:href="@{/css/style.css}" rel="stylesheet">
+
+  <script th:src="@{/js/jquery-3.6.3.min.js}"></script>
+  <script th:src="@{/bootstrap/js/bootstrap.bundle.min.js}"></script>
+  <script th:src="@{/js/jquery.validate.js}"></script>
+  
+
+  <script type="text/javascript" th:src="@{/Datatables/datatables.js}"></script>
+
+  <script type="text/javascript" th:src="@{/js/jquery-ui.min.js}"></script>
+  <script type="text/javascript" th:src="@{/js/popper.min.js}"></script>
+ 
+  <script type="text/javascript" th:src="@{/js/jquery.autocomplete.js}"></script>
+  <script type="text/javascript" th:src="@{/js/jquery.validate.min.js}"></script>
+  <script type="text/javascript" th:src="@{/js/additional-methods.min.js}"></script>
+  <script type="text/javascript" th:src="@{/js/jquery.validator.messagesRules.js}"></script>
+  <script type="text/javascript" th:src="@{/js/jquery-confirm.min.js}"></script>
+  <script type="text/javascript" th:src="@{/js/funcionesComunes.js}"></script>
+  <script type="text/javascript" th:src="@{/js/datepickerconfes.js}"></script>
+  <script type="text/javascript" th:src="@{/js/utiles.js}"></script>
+  <script type="text/javascript" th:src="@{/js/sockjs.js}"></script>
+  <script type="text/javascript" th:src="@{/js/stomp.js}"></script>
+  
+  <script th:src="@{/js/main.js}"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+  
+  
+  
+  
+  <title layout:title-pattern="$LAYOUT_TITLE - $CONTENT_TITLE"></title>
+</head>
