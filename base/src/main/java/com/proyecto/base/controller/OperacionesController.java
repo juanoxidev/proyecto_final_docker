@@ -143,7 +143,7 @@ public class OperacionesController extends DefaultController {
     
     
     
-    @PostMapping(value={"/getOperacionesAlyc"}, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(value={"/getOperacionesAlyc"})
     public ResponseEntity<byte[]> compararReportes(@ModelAttribute OperacionDTO operacionDTO) {
     		
         try {
@@ -153,8 +153,8 @@ public class OperacionesController extends DefaultController {
      
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            String nombreArchivo = String.format("operaciones_alyc_%s.xlsx", operacionDTO.getAlycName().trim().toLowerCase());
-            headers.setContentDisposition(ContentDisposition.builder("attachment").filename(nombreArchivo).build());
+          
+            headers.setContentDisposition(ContentDisposition.builder("attachment").filename("operaciones_alyc").build());
 
 
             return new ResponseEntity<>(excelResultado, headers, HttpStatus.OK);
