@@ -21,8 +21,8 @@
 				$(document).ready(function() {
 		
 	
-					$('#abm-nav').collapse('show');
-					$("#abm-nav li a span:contains('Registrar')").parent().addClass("active");
+					$('#op-nav').collapse('show');
+					$("#op-nav li a span:contains('Registrar')").parent().addClass("active");
 					crearTabla();
 					
 					$("#fechaDesdeFilter").datepicker();
@@ -384,12 +384,12 @@
 	
 						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
 							<label class="form-label">Cliente</label>
-							<input type="text" class="form-control" placeholder="Destinatario" th:field="*{cliente}" autocomplete="off"  id="inputDestinatario">
+							<input type="text" class="form-control" placeholder="Cliente" th:field="*{cliente}" autocomplete="off"  id="inputDestinatario">
 						</div>
 						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
 							<label for="inputOficial" class="form-label">Alyc</label>
 							<select class="form-select" th:field="*{alyc}" id="inputAlyc">
-								<option selected value="">Todos</option>
+								<option selected value="">TODOS</option>
 								<option th:each="a : ${alycs}" th:value="${a.id}"  th:text="${a.nombre.toUpperCase()}">Alyc</option>
 							</select>
 
@@ -397,7 +397,7 @@
 						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
 							<label for="inputOficial" class="form-label">Moneda</label>
 							<select class="form-select" th:field="*{moneda}" id="inputMoneda">
-								<option selected value="">Todos</option>
+								<option selected value="">TODOS</option>
 								<option th:each="mo : ${monedas}" th:value="${mo.id}"  th:text="${mo.nombre.toUpperCase()}">Moneda</option>
 							</select>
 
@@ -405,7 +405,7 @@
 						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
 							<label for="inputOficial" class="form-label">Ticker</label>
 							<select class="form-select" th:field="*{ticker}" id="inputTicker">
-								<option selected value="">Todos</option>
+								<option selected value="">TODOS</option>
 								<option th:each="t : ${tickers}" th:value="${t.id}"  th:text="${t.nombre.toUpperCase()}">Ticker</option>
 							</select>
 
@@ -413,7 +413,7 @@
 						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
 							<label for="inputOficial" class="form-label">Plazo</label>
 							<select class="form-select" th:field="*{plazo}" id="inputPlazo">
-								<option selected value="">Todos</option>
+								<option selected value="">TODOS</option>
 								<option th:each="p : ${plazos}" th:value="${p.id}"  th:text="${p.descripcionCompleta.toUpperCase()}">Plazo</option>
 							</select>
 

@@ -48,6 +48,13 @@ public class OperacionFilter implements IFilter {
 		Sentencia sentencia = new Sentencia();
 		conAnd = false;
 		
+		
+		if (getCriteriosDeBusqueda().getId() != null) {
+		    sqlAux.append(conectorSql());
+		    sqlAux.append("o.id = :id");
+		    parametros.put("id", getCriteriosDeBusqueda().getId());
+		}
+		
 		if (getCriteriosDeBusqueda().getFechaDesde() != null) {
 		    sqlAux.append(conectorSql());
 		    sqlAux.append("o.fecha >= :fechaDesde");
