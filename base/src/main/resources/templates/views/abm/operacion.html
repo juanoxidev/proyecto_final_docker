@@ -19,16 +19,17 @@
 				var languageDatatable = /*[[@{/Datatables/Spanish.json}]]*/;
 				var nameDatatable = "bandejaABMOperaciones"
 				$(document).ready(function() {
-					$.datepicker.setDefaults({
-    dateFormat: 'dd/mm/yy' // Aquí usamos 'yy-mm-dd' para asegurar que las fechas tengan el formato adecuado.
-});
-					//Expande la sidebar y le pinta el circulito a la opción de ingresadas
+		
+	
 					$('#abm-nav').collapse('show');
 					$("#abm-nav li a span:contains('Registrar')").parent().addClass("active");
 					crearTabla();
 					
 					$("#fechaDesdeFilter").datepicker();
 		            $("#fechaHastaFilter").datepicker();
+
+					$("#fechaDesdeModal").datepicker();
+		            $("#fechaHastaModal").datepicker();
 
 
 					
@@ -81,35 +82,40 @@
             	});
 
 
-$("#formExportar").on("submit", function(event) {
-						event.preventDefault(); 
-					var form = $(this);
+				$("#formExportar").on("submit", function(event) {
+				event.preventDefault(); 
+				var form = $(this);
+				var selectedDate = $("#fechaHastaModal").val();
+					console.log(selectedDate);
+					var selectedDate2 = $("#fechaDesdeModal").val();
+					console.log(selectedDate2);
+					var alyc = $("#alycModal").val();
 
-				
-
-
+				let dto = {};
+				dto.alyc = alyc;
+				dto.fechaDesde = selectedDate2;
+				dto.fechaHasta = selectedDate;
                 $.ajax({
 					
 					type: "POST",
 					beforeSend: function(xhr) {
-						// Aquí configuramos el encabezado CSRF
-						xhr.setRequestHeader(header, token);  // 'header' contiene el nombre del header y 'token' es su valor
+						xhr.setRequestHeader(header, token);  
 					},
 					url: urlExportar,
-					data: form.serialize(), 
+					contentType: "application/json", 
+					data: JSON.stringify(dto), 
 					xhrFields: {
-                responseType: 'blob'  // Esto es clave para manejar archivos binarios
+               		 responseType: 'blob'  
             		},
 					success: function (data, status, xhr) {
-						console.log(data)
-							// Obtener el nombre del archivo desde los headers si es necesario
-							const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = "operaciones_alyc.xlsx"; // Nombre del archivo
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link); // Remover el enlace después de la descarga
+		
+					const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+					const link = document.createElement('a');
+					link.href = window.URL.createObjectURL(blob);
+					link.download = "operaciones_alyc.xlsx"; 
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link); 
 						 
 							$("#formExportar input, #formExportar select, #formExportar button").prop("disabled", true);
                 				setTimeout(function() {
@@ -171,24 +177,9 @@ $("#formExportar").on("submit", function(event) {
 				             dataSrc: 'content'
 				         },
 
-						 ///
-					// 		 <th scope="col">Fecha</th>
-					// <th scope="col">ALYC</th>
-					// <th scope="col">Cliente</th>
-					// <th scope="col">T.Operacion</th>
-					// <th scope="col">Plazo</th>
-					// <th scope="col">Especie</th>
-					// <th scope="col">C.Nominal</th>
-					// <th scope="col">Moneda</th>
-					// <th scope="col">P.Mesa</th>
-					// <th scope="col">P.Cliente</th>
-					// <th scope="col">M.Operado</th>
-					// <th scope="col">M.Comision</th>
-					// <th scope="col">Estado</th>
-					// <th scope="col">&nbsp;</th>
 
-						 ///
 				         columns: [
+						 	{ data: 'id', onclick:"alert(1)"},
 							 { data: 'fecha', onclick:"alert(1)"},
                              { data: 'alycName', onclick:"alert(1)"},
                              { data: 'cliente', onclick:"alert(1)"},
@@ -239,10 +230,8 @@ $("#formExportar").on("submit", function(event) {
 				          },
 				          searching: false,
 				          ordering: false,
-				          //Remueve estos tipos de class que dataTable agrega automáticamente
 				          drawCallback: function () {
 				              $("#tablaOperacion").removeClass("no-footer");
-				              //Poner los tooltip
 				              $('[data-bs-toggle="tooltip"]').tooltip()
 				          },
 				        });	
@@ -252,7 +241,7 @@ $("#formExportar").on("submit", function(event) {
 						tablaOperacion.on('click', 'td:not(:last-child)', function () {
 						var fila = tablaOperacion.row($(this).closest('tr')).data();
 			
-					    editarMoneda(fila);
+					    editarOperacion(fila);
 					
 
 
@@ -269,14 +258,21 @@ $("#formExportar").on("submit", function(event) {
 				}
 				
 				function editarOperacion(operacion){
-					const {monedaId, monedaName, monedaDescripcion, estado} = operacion;
+					 const {alyc, cantidadNominal, cliente, comision, estado, id, moneda, operado, plazo, precioCliente, precioMesa, ticker, tipoOperacion} = operacion;
 					$( "div" ).remove( ".alert" );
 					limpiarCamposModal();
-					$("#idModal").val(monedaId);
-					$('#nombreModal').val(monedaName);
-					$('#descripcionModal').val(monedaDescripcion);
+					$("#idModal").val(id);
+					$('#alycModal').val(alyc);
+					$('#tickerModal').val(ticker);
+					$("#operacionModal").val(moneda);
+					$("#precioMesaModal").val(precioMesa);
+					$("#precioClienteModal").val(precioCliente);
+					$("#cantidadNominalModal").val(cantidadNominal);
+					$("#clienteModal").val(cliente);
+					$("#tipoOperacionModal").val(tipoOperacion);
+					$("#plazoModal").val(plazo);
 					$("#estadoModal").val(estado);
-					$("#operacionModalLabel").text(`Editar Operacion ${monedaName}`);
+					$("#operacionModalLabel").text(`Editar Operacion #${id}`);
         			$("#formOperacion button[type=submit]").text("Editar");
         			$("#formOperacion").attr("action", urlEditar);
 					$('#operacionModal').modal('show');
@@ -313,8 +309,15 @@ $("#formExportar").on("submit", function(event) {
 				
 				function limpiarCamposModal(){
 					$("#idModal").val("");
-					$('#nombreModal').val("");
-					$('#descripcionModal').val("");
+					$('#alycModal').val($("#alycModal option:first").val());
+					$('#tickerModal').val($("#tickerModal option:first").val());
+					$("#operacionModal").val($("#operacionModal option:first").val());
+					$("#precioMesaModal").val("");
+					$("#precioClienteModal").val("");
+					$("#cantidadNominalModal").val("");
+					$("#clienteModal").val("");
+					$("#tipoOperacionModal").val($("#tipoOperacionModal option:first").val());
+					$("#plazoModal").val($("#plazoModal option:first").val());
 					$("#estadoModal").val($("#estadoModal option:first").val());
 				}
 				
@@ -364,12 +367,77 @@ $("#formExportar").on("submit", function(event) {
                     </div>
                   </div>
                   <!--Busqueda avanzada-->
-                  <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
-                    <div class="accordion-body">
-                      <div class="row">
-                      </div>
-                    </div>
-                  </div>
+        <!--Busqueda avanzada-->
+				<div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample" style="">
+					<div class="accordion-body">
+					<div class="row">
+					
+						<div class="col-xs-12 col-sm-3 col-md-2 margin-top-1">
+						<label class="form-label">Fecha desde</label>
+						<input type="text" class="form-control" placeholder="Desde" autocomplete="off" th:field="*{fechaDesde}"id="fechaDesdeFilter">
+						</div>
+						<div class="col-xs-12 col-sm-3 col-md-2 margin-top-1">
+						<label class="form-label">Fecha hasta</label>
+						<input type="text" class="form-control" placeholder="Hasta" autocomplete="off" th:field="*{fechaHasta}"id="fechaHastaFilter">
+						</div>
+	
+	
+						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
+							<label class="form-label">Cliente</label>
+							<input type="text" class="form-control" placeholder="Destinatario" th:field="*{cliente}" autocomplete="off"  id="inputDestinatario">
+						</div>
+						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
+							<label for="inputOficial" class="form-label">Alyc</label>
+							<select class="form-select" th:field="*{alyc}" id="inputAlyc">
+								<option selected value="">Todos</option>
+								<option th:each="a : ${alycs}" th:value="${a.id}"  th:text="${a.nombre.toUpperCase()}">Alyc</option>
+							</select>
+
+						</div>
+						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
+							<label for="inputOficial" class="form-label">Moneda</label>
+							<select class="form-select" th:field="*{moneda}" id="inputMoneda">
+								<option selected value="">Todos</option>
+								<option th:each="mo : ${monedas}" th:value="${mo.id}"  th:text="${mo.nombre.toUpperCase()}">Moneda</option>
+							</select>
+
+						</div>
+						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
+							<label for="inputOficial" class="form-label">Ticker</label>
+							<select class="form-select" th:field="*{ticker}" id="inputTicker">
+								<option selected value="">Todos</option>
+								<option th:each="t : ${tickers}" th:value="${t.id}"  th:text="${t.nombre.toUpperCase()}">Ticker</option>
+							</select>
+
+						</div>
+						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
+							<label for="inputOficial" class="form-label">Plazo</label>
+							<select class="form-select" th:field="*{plazo}" id="inputPlazo">
+								<option selected value="">Todos</option>
+								<option th:each="p : ${plazos}" th:value="${p.id}"  th:text="${p.descripcionCompleta.toUpperCase()}">Plazo</option>
+							</select>
+
+						</div>
+	
+						<div class="col-xs-12 col-sm-12 col-md-5 margin-top-1">
+							<label for="inputOficial" class="form-label">Tipo de Operacion</label>
+							<select class="form-select" th:field="*{tipoOperacion}" id="inputTipoOperacion">
+								<option th:each="to : ${tipoOperacion}" th:value="${to}"  th:text="${to.name()}">TipoOperacion</option>
+							</select>
+
+						</div>
+	
+						<div class="col-xs-12 col-sm-12 col-md-6 margin-top-1">
+						<label class="form-label">Estado</label>
+						<select class="form-select" th:field="*{estado}" id="inputEstado">
+							<option th:each="e : ${estados}" th:value="${e}"  th:text="${e.name()}">Estados</option>
+						</select>
+						</div>
+
+
+					</div>
+					</div>
+				</div>
                 </div>
               </div>
             </div>            
@@ -391,10 +459,11 @@ $("#formExportar").on("submit", function(event) {
                 </div>
           	</div>
 			  <div id="alertContainer" class="mb-3"></div>
+			  <div class="table-responsive">
 		  <table id="tablaOperacion" class="table-sm table table-hover table" style="width:100%">
 		   <thead>
             <tr>
-
+				<th scope="col">Nro</th>
 				<th scope="col">Fecha</th>
                 <th scope="col">ALYC</th>
                 <th scope="col">Cliente</th>
@@ -414,7 +483,7 @@ $("#formExportar").on("submit", function(event) {
      	   <tbody>     
 		   	</tbody>
 		 </table>
-		  
+		</div>
     	</div><!-- fin container resultados -->
       </div>
      </div><!-- fin col -->
@@ -516,24 +585,22 @@ $("#formExportar").on("submit", function(event) {
 				<form action="#" th:object="${exportarExcel}" method="post" id="formExportar" class="row g-3" enctype="multipart/form-data">
 					<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 					
-					<!-- Campo para seleccionar Alyc -->
 					<div class="col-md-12">
 						<label for="alycModal" class="form-label">Seleccione Alyc</label>
 						<select id="alycModal" name="alycModal" class="form-select" th:field="*{alyc}" required>
 							<option th:each="a : ${alycs}" th:value="${a.id}" th:text="${a.nombre.toUpperCase()}">Alyc</option>
 						</select>
 					</div>
-
+	
 					<div class="col-6">
 						<label class="form-label">Fecha desde</label>
-						<input type="text" class="form-control" placeholder="Desde" autocomplete="off" th:field="*{fechaDesde}"id="fechaDesdeFilter"required>
+						<input type="text" class="form-control" placeholder="Desde" autocomplete="off" th:field="*{fechaDesde}"id="fechaDesdeModal"required>
 					  </div>
 					  <div class="col-6">
 						<label class="form-label">Fecha hasta</label>
-						<input type="text" class="form-control" placeholder="Hasta" autocomplete="off" th:field="*{fechaHasta}"id="fechaHastaFilter" required>
+						<input type="text" class="form-control" placeholder="Hasta" autocomplete="off" th:field="*{fechaHasta}"id="fechaHastaModal" required>
 					  </div>
 
-					<!-- Botones de acción -->
 					<div class="text-center mt-3">
 						<button type="submit" class="btn btn-primary" id="btnsubmit">Texto del boton submit</button>
 						<button type="reset" class="btn btn-secondary">Limpiar</button>
@@ -547,8 +614,5 @@ $("#formExportar").on("submit", function(event) {
 	</div>
 </div>
     </div>
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 </body>
 </html>

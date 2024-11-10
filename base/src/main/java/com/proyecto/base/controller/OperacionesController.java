@@ -143,8 +143,8 @@ public class OperacionesController extends DefaultController {
     
     
     
-    @PostMapping(value={"/getOperacionesAlyc"})
-    public ResponseEntity<byte[]> compararReportes(@ModelAttribute OperacionDTO operacionDTO) {
+    @PostMapping(value="/getOperacionesAlyc",  consumes = "application/json")
+    public ResponseEntity<byte[]> compararReportes(@RequestBody OperacionDTO operacionDTO) {
     		
         try {
 

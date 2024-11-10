@@ -69,6 +69,7 @@ public class OperacionDTO {
 					  .operado(operacion.getOperado())
 					  .comision(operacion.getComision())
 					  .plazoName(operacion.getPlazo().getDescripcionCompleta())
+					  .plazo(operacion.getPlazo().getId())
 					  .estado(operacion.getEstado())
 					  .build();
 		return dto;

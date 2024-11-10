@@ -118,5 +118,27 @@ public class Operacion {
 	public boolean esMiMoneda(Moneda moneda) {
 		return this.moneda == moneda;
 	}
+
+	public boolean esMiAlyc(Long alycId) {
+		return this.alyc.getId().compareTo(alycId) == 0;
+	}
+
+	public boolean esMiTicker(Long tickerId) {
+		return this.ticker.getId().compareTo(tickerId) == 0;
+	}
+
+	public boolean esMiMoneda(Long monedaId) {
+		return this.moneda.getId().compareTo(monedaId) == 0;
+	}
+
+	public boolean esMiPlazo(Long plazoId) {
+		// TODO Auto-generated method stub
+		return this.plazo.getId().compareTo(plazoId) == 0;
+	}
+
+	public boolean esMiTipoOperacion(TipoOperacion tipoOperacionForm) {
+		// TODO Auto-generated method stub
+		return this.tipoOperacion.equals(tipoOperacionForm);
+	}
 	
 }

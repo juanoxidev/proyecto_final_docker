@@ -21,6 +21,7 @@ import com.proyecto.base.dto.OperacionDTO;
 import com.proyecto.base.dto.ResponseDTO;
 import com.proyecto.base.enums.EstadosEnum;
 import com.proyecto.base.enums.IndiceExcelOperacionesDesdeHasta;
+import com.proyecto.base.enums.TipoOperacion;
 import com.proyecto.base.excepcion.BaseException;
 import com.proyecto.base.filter.OperacionFilter;
 import com.proyecto.base.model.Alyc;
@@ -132,80 +133,112 @@ public class OperacionServiceImpl implements OperacionService, IDatatable<Operac
 		Integer cantidadNominalForm = formCreacion.getCantidadNominal();
 		Double precioMesaForm = formCreacion.getPrecioMesa();
 		Double precioClienteForm = formCreacion.getPrecioCliente();
-		Date fechaForm = formCreacion.getFecha();
+		TipoOperacion tipoOperacionForm = formCreacion.getTipoOperacion();
+		Long plazoId = formCreacion.getPlazo();
+		//Date fechaForm = formCreacion.getFecha();
 		
 		Long monedaId = formCreacion.getMoneda();
 		Long tickerId = formCreacion.getTicker();
 		Long alycId   = formCreacion.getAlyc();
 		
-		Alyc alycForm = alycRepository.getReferenceById(alycId);
-		Moneda monedaForm = monedaRepository.getReferenceById(monedaId);
-		Ticker tickerForm = tickerRepository.getReferenceById(tickerId);
 
 		boolean cambio = false;
+		boolean recalcular = false;
 		
 			
 			Operacion operacionBD = operacionRepository.getReferenceById(formCreacion.getId());
 			
-			verificarSiCambioCantidadNominal(cantidadNominalForm,operacionBD,cambio);
+			if(cantidadNominalForm != null && !operacionBD.esMiCantidadNominal(cantidadNominalForm)) {
+				operacionBD.setCantidadNominal(cantidadNominalForm);
+				cambio = true;
+				recalcular = true;
+			}	
 			
-		    verificarSiCambioPrecioMesa(precioMesaForm,operacionBD,cambio);
+			if(precioMesaForm != null && !operacionBD.esMiPrecioMesa(precioMesaForm)) {
+				operacionBD.setPrecioMesa(precioMesaForm);
+				cambio = true;
+				recalcular = true;
+			}	
+			
+			if(precioClienteForm != null && !operacionBD.esMiPrecioCliente(precioClienteForm)) {
+				operacionBD.setPrecioCliente(precioClienteForm);
+				cambio = true;
+				recalcular = true;
+			}	
+			
+			if(tipoOperacionForm != null && !operacionBD.esMiTipoOperacion(tipoOperacionForm)) {
+				cambio = true;
+				operacionBD.setTipoOperacion(tipoOperacionForm);
+			}	
+			
+			if(!operacionBD.esMiPlazo(plazoId)) {
+				Plazo plazoBD = plazoRepository.getReferenceById(plazoId);
+				operacionBD.setPlazo(plazoBD);
+				cambio = true;
+			}
+			
+
+				if(!operacionBD.esMiAlyc(alycId)) {
+					Alyc alycBD = alycRepository.getReferenceById(alycId);
+					operacionBD.setAlyc(alycBD);
+					cambio = true;
+					recalcular = true;
+				}	
 		    
-		    verificarSiCambioPrecioCliente(precioClienteForm,operacionBD,cambio);
+				if(!operacionBD.esMiTicker(tickerId)) {
+					Ticker tickerBD = tickerRepository.getReferenceById(tickerId);
+					operacionBD.setTicker(tickerBD);
+					cambio = true;
+				}	
+				
+				if(!operacionBD.esMiMoneda(monedaId)) {
+					Moneda monedaBD = monedaRepository.getReferenceById(monedaId);
+					operacionBD.setMoneda(monedaBD);
+					cambio = true;
+				}	
+				
+				recalcularOperacion(recalcular, operacionBD);
 			
-			verificarSiCambioFechaOperacion(fechaForm,operacionBD,cambio);
+			//verificarSiCambioFechaOperacion(fechaForm,operacionBD,cambio);
 		    
-			verificarSiCambioAlyc(alycForm,operacionBD,cambio);
-			
-			verificarSiCambioTicker(tickerForm,operacionBD,cambio);
-			
-			verificarSiCambioDeMoneda(monedaForm,operacionBD,cambio);
-			
+		
 			definirResp(cambio,resp,operacionBD,usuario);
 			
 		return resp;
 	}
 	
+	private void recalcularOperacion(boolean recalcular, Operacion op) {
+		if (recalcular) {
+			op.setOperado(op.getCantidadNominal()*op.getPrecioCliente());
+			op.setComision(((op.getCantidadNominal()*(op.getPrecioCliente() - op.getPrecioMesa()))*(op.getAlyc().getPorcentajeComision()/100)));
+		}
+	}
+
+
 	private void definirResp(boolean cambio,ResponseDTO<OperacionDTO> resp,Operacion operacionBD, Usuario user) {
 		
 		if (cambio) {
 			Auditoria.modificar(operacionBD.getAuditoria(), user );
 			operacionRepository.save(operacionBD);
-			resp.setLog(String.format("Se ha modificado la operacion %s ", operacionBD));	 		 
+			resp.setLog(String.format("Se ha modificado la operacion #%d ", operacionBD.getId()));	 		 
 		} else {
-			resp.setLog(String.format("No se han enviado modificaciones para la operacion %s", operacionBD)); 
+			resp.setLog(String.format("No se han enviado modificaciones para la operacion #%d", operacionBD.getId())); 
 		}
 		
 		resp.setOk(cambio);
 	}
 	
-	private void verificarSiCambioCantidadNominal (Integer cantidadNominalForm, Operacion operacionBD,boolean cambio) {	
-		if(cantidadNominalForm != null && !operacionBD.esMiCantidadNominal(cantidadNominalForm)) {
-			operacionBD.setCantidadNominal(cantidadNominalForm);
-			cambio = true;
-		}	
-	}
+
 	
-	private void verificarSiCambioPrecioMesa (Double precioMesaForm, Operacion operacionBD,boolean cambio) {	
-		if(precioMesaForm != null && !operacionBD.esMiPrecioMesa(precioMesaForm)) {
-			operacionBD.setPrecioMesa(precioMesaForm);
-			cambio = true;
-		}	
-	}
 	
-	private void verificarSiCambioPrecioCliente (Double precioClienteForm, Operacion operacionBD,boolean cambio) {	
-		if(precioClienteForm != null && !operacionBD.esMiPrecioCliente(precioClienteForm)) {
-			operacionBD.setPrecioCliente(precioClienteForm);
-			cambio = true;
-		}	
-	}
+
 	
-	private void verificarSiCambioFechaOperacion (Date fechaForm, Operacion operacionBD,boolean cambio) {	
-		if(!operacionBD.esMiFechaOperacion(fechaForm)) {
-			operacionBD.setFecha(fechaForm);
-			cambio = true;
-		}	
-	}
+//	private void verificarSiCambioFechaOperacion (Date fechaForm, Operacion operacionBD,boolean cambio) {	
+//		if(!operacionBD.esMiFechaOperacion(fechaForm)) {
+//			operacionBD.setFecha(fechaForm);
+//			cambio = true;
+//		}	
+//	}
 	
 	private void verificarSiCambioAlyc (Alyc alycForm, Operacion operacionBD,boolean cambio) {	
 		if(!operacionBD.esMiAlyc(alycForm)) {
@@ -232,8 +265,6 @@ public class OperacionServiceImpl implements OperacionService, IDatatable<Operac
 	@Override
 	@Transactional
 	public byte[] getOperacionesSegunAlycEntreFechas(OperacionDTO operacionDTO)  {
-		log.info("La fecha desde es: {}", UtilesFechas.getFechaFormateada(operacionDTO.getFechaDesde()));
-		log.info("La fecha hasta es: {}", UtilesFechas.getFechaFormateada(operacionDTO.getFechaHasta()));
 		List<Operacion> operacionesBD = operacionRepository.getOperacionesDeAlycEntreFechas(operacionDTO.getAlyc(),
 				operacionDTO.getFechaDesde(), operacionDTO.getFechaHasta());
 		log.info("Se exportaron {} operaciones", operacionesBD.size());

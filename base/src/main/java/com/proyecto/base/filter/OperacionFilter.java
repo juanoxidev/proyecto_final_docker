@@ -1,5 +1,6 @@
 package com.proyecto.base.filter;
 
+import java.util.Calendar;
 import java.util.HashMap;
 
 import org.springframework.util.StringUtils;
@@ -7,6 +8,7 @@ import org.springframework.util.StringUtils;
 import com.proyecto.base.dto.OperacionDTO;
 import com.proyecto.base.dto.PlazoDTO;
 import com.proyecto.base.dto.UsuarioDTO;
+import com.proyecto.base.enums.TipoOperacion;
 import com.proyecto.base.filter.sentencia.Sentencia;
 
 import lombok.AllArgsConstructor;
@@ -46,40 +48,69 @@ public class OperacionFilter implements IFilter {
 		Sentencia sentencia = new Sentencia();
 		conAnd = false;
 		
-//		if (getCriteriosDeBusqueda().getId() != null) {
-//			sqlAux.append(conectorSql());
-//			sqlAux.append("o.id =(:operacion)");
-//			parametros.put("operacion", getCriteriosDeBusqueda().getId());
-//			
-//		}
-//		
-//		if (getCriteriosDeBusqueda().getTicker() != null) {
-//			sqlAux.append(conectorSql());
-//			sqlAux.append("o.ticker.id =(:ticker)");
-//			parametros.put("ticker", getCriteriosDeBusqueda().getId());
-//			
-//		}
-//		
-//		if (!getCriteriosDeBusqueda().getMoneda().equals(null)) {
-//			sqlAux.append(conectorSql());
-//			sqlAux.append("o.moneda.id =(:moneda)");
-//			parametros.put("moneda", getCriteriosDeBusqueda().getId());
-//			
-//		}
-//		
-//		if (getCriteriosDeBusqueda().getAlyc() != null) {
-//			sqlAux.append(conectorSql());
-//			sqlAux.append("o.alyc.id =(:alyc)");
-//			parametros.put("alyc", getCriteriosDeBusqueda().getAlyc());
-//			
-//		}
-//		
-//		if (getCriteriosDeBusqueda().getEstado() != null && !getCriteriosDeBusqueda().getEstado().getCodigo().equals("")) {
-//			sqlAux.append(conectorSql());
-//			sqlAux.append("o.estado LIKE (:estado)");
-//			parametros.put("estado", getCriteriosDeBusqueda().getEstado());
-//			
-//		}
+		if (getCriteriosDeBusqueda().getFechaDesde() != null) {
+		    sqlAux.append(conectorSql());
+		    sqlAux.append("o.fecha >= :fechaDesde");
+		    parametros.put("fechaDesde", getCriteriosDeBusqueda().getFechaDesde());
+		}
+
+		if (getCriteriosDeBusqueda().getFechaHasta() != null) {
+		    sqlAux.append(conectorSql());
+		    Calendar calendar = Calendar.getInstance();
+		    calendar.setTime(getCriteriosDeBusqueda().getFechaHasta());
+		    calendar.add(Calendar.DAY_OF_MONTH, 1);
+		    sqlAux.append("o.fecha < :fechaHasta");
+		    parametros.put("fechaHasta", calendar.getTime());
+		}
+		
+		if (getCriteriosDeBusqueda().getTicker() != null) {
+			sqlAux.append(conectorSql());
+			sqlAux.append("o.ticker.id =(:ticker)");
+			parametros.put("ticker", getCriteriosDeBusqueda().getId());
+			
+		}
+		
+		if (getCriteriosDeBusqueda().getMoneda() != null) {
+			sqlAux.append(conectorSql());
+			sqlAux.append("o.moneda.id =(:moneda)");
+			parametros.put("moneda", getCriteriosDeBusqueda().getId());
+			
+		}
+		
+		if (getCriteriosDeBusqueda().getAlyc() != null) {
+			sqlAux.append(conectorSql());
+			sqlAux.append("o.alyc.id =(:alyc)");
+			parametros.put("alyc", getCriteriosDeBusqueda().getAlyc());
+			
+		}
+		
+		if (StringUtils.hasText(getCriteriosDeBusqueda().getCliente())) {
+			sqlAux.append(conectorSql());
+			sqlAux.append("LOWER(o.cliente) LIKE LOWER(:cliente)");
+			parametros.put("cliente", getCriteriosDeBusqueda().getCliente().toLowerCase());
+			
+		}
+		
+		if (getCriteriosDeBusqueda().getPlazo() != null) {
+			sqlAux.append(conectorSql());
+			sqlAux.append("o.plazo.id =(:plazo)");
+			parametros.put("plazo", getCriteriosDeBusqueda().getPlazo());
+			
+		}
+		
+		if (getCriteriosDeBusqueda().getTipoOperacion() != null && getCriteriosDeBusqueda().getTipoOperacion() != TipoOperacion.TODOS) {
+			sqlAux.append(conectorSql());
+			sqlAux.append("o.tipoOperacion =(:tipoOperacion)");
+			parametros.put("tipoOperacion", getCriteriosDeBusqueda().getTipoOperacion());
+			
+		}
+		
+		if (getCriteriosDeBusqueda().getEstado() != null && !getCriteriosDeBusqueda().getEstado().getCodigo().equals("")) {
+			sqlAux.append(conectorSql());
+			sqlAux.append("o.estado = (:estado)");
+			parametros.put("estado", getCriteriosDeBusqueda().getEstado());
+			
+		}
 		
 		log.debug("######## SENTENCIA HQL ########## : {}", sqlAux.toString());
 		sentencia.setSql(sqlAux.toString());
