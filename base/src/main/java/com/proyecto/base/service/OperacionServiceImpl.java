@@ -14,12 +14,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.proyecto.base.constantes.WConstant;
 import com.proyecto.base.datatable.DataTablesRequestForm;
 import com.proyecto.base.datatable.DataTablesResponse;
 import com.proyecto.base.datatable.IDatatable;
 import com.proyecto.base.dto.OperacionDTO;
 import com.proyecto.base.dto.ResponseDTO;
 import com.proyecto.base.enums.EstadosEnum;
+import com.proyecto.base.enums.IndiceExcel;
 import com.proyecto.base.enums.IndiceExcelOperacionesDesdeHasta;
 import com.proyecto.base.enums.TipoOperacion;
 import com.proyecto.base.excepcion.BaseException;
@@ -274,6 +276,10 @@ public class OperacionServiceImpl implements OperacionService, IDatatable<Operac
 		int i = 0;
 		byte[] resultado = null;
 
+		
+		agregarEncabezado(sheet,i++);
+	   
+		
 		for (Operacion operacion : operacionesBD) {
 			Row row = sheet.createRow(i++);
 			crearCeldas(row, operacion);
@@ -298,6 +304,37 @@ public class OperacionServiceImpl implements OperacionService, IDatatable<Operac
 		
 		for (int i = 0; i < cantAtributosOperacion; i++) {
 			row.createCell(i);
+		}
+	}
+	
+	public void agregarEncabezado(Sheet sheet, int posRow) {
+		// Row header = sheet.getRow(0);
+		
+		crearRowSiNoExiste(sheet,posRow);
+		Row row = sheet.getRow(posRow);
+
+		// row.createCell(0).setCellValue("");
+		row.createCell(IndiceExcelOperacionesDesdeHasta.FECHA.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.FECHA.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.ALYC.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.ALYC.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.CLIENTE.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.CLIENTE.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.T_OPERACION.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.T_OPERACION.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.PLAZO.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.PLAZO.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.ESPECIE.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.ESPECIE.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.CANTIDADNOMINAL.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.CANTIDADNOMINAL.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.MONEDA.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.MONEDA.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.PRECIOMESA.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.PRECIOMESA.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.PRECIOCLIENTE.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.PRECIOCLIENTE.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.MONTOOPERADO.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.MONTOOPERADO.getNombre());
+		row.createCell(IndiceExcelOperacionesDesdeHasta.MONTOCOMISION.getPos()).setCellValue(IndiceExcelOperacionesDesdeHasta.MONTOCOMISION.getNombre());
+		
+		
+		
+		
+	}
+	
+	private void crearRowSiNoExiste(Sheet sheet, int pos) {
+		if(sheet.getRow(pos)==null) {
+			sheet.createRow(pos);
 		}
 	}
 	
