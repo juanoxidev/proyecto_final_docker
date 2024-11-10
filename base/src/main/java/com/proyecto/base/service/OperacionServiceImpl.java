@@ -1,33 +1,24 @@
 package com.proyecto.base.service;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
 import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import com.proyecto.base.converter.OperacionConverter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.proyecto.base.datatable.DataTablesRequestForm;
 import com.proyecto.base.datatable.DataTablesResponse;
 import com.proyecto.base.datatable.IDatatable;
 import com.proyecto.base.dto.OperacionDTO;
 import com.proyecto.base.dto.ResponseDTO;
-import com.proyecto.base.dto.UsuarioDTO;
 import com.proyecto.base.enums.EstadosEnum;
 import com.proyecto.base.enums.IndiceExcelOperacionesDesdeHasta;
 import com.proyecto.base.excepcion.BaseException;
@@ -284,7 +275,11 @@ public class OperacionServiceImpl implements OperacionService, IDatatable<Operac
 		int comision = (int)(operacion.getPrecioMesa()-operacion.getPrecioCliente());
 		comision = (comision<0) ? comision*-1:comision;
 		
-		row.getCell(IndiceExcelOperacionesDesdeHasta.FECHA.getPos()).setCellValue(operacion.getFecha());
+	    Date fecha = operacion.getFecha();
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yy");
+	    String fechaFormateada = formatter.format(fecha.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+
+		row.getCell(IndiceExcelOperacionesDesdeHasta.FECHA.getPos()).setCellValue(fechaFormateada);
 		
 		row.getCell(IndiceExcelOperacionesDesdeHasta.ALYC.getPos()).setCellValue(operacion.getAlyc().getNombre());
 
