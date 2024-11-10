@@ -7,4 +7,6 @@ import com.proyecto.base.repository.hql.ListRepository;
 
 public interface TickerRepository extends JpaRepository<Ticker, Long>, ListRepository<Ticker>{
 
+	boolean existsByNombre(String nombre);
+
 }

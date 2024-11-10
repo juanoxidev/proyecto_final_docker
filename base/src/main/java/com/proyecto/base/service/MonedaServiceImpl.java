@@ -54,9 +54,14 @@ public class MonedaServiceImpl implements MonedaService, IDatatable<Moneda> {
 		Moneda monedaBD = monedaRepository.getReferenceById(formCreacion.getMonedaId());
 		
 		if(StringUtils.hasText(nombreForm) && !monedaBD.esMiNombre(nombreForm)) {
+			if(validarSiYaExiste(nombreForm)) {
+				throw new BaseException("Ya existe una Moneda con ese nombre");
+			};
 			monedaBD.setNombre(nombreForm.toUpperCase());
 			cambio = true;
 		}
+		
+		
 		
 		if(StringUtils.hasText(descripcionForm) && !monedaBD.esMiDescripcion(descripcionForm)) {
 			monedaBD.setDescripcionCompleta(descripcionForm.toUpperCase());
@@ -90,6 +95,11 @@ public class MonedaServiceImpl implements MonedaService, IDatatable<Moneda> {
 		return resp;
 	}
 
+	private boolean validarSiYaExiste(String nombreForm) {
+		return monedaRepository.existsByNombre(nombreForm.trim());
+	}
+
+
 	@Override
 	public ResponseDTO<MonedaDTO> crearMoneda(MonedaDTO dto, Usuario usuario) {
 		ResponseDTO<MonedaDTO> resp = new ResponseDTO<MonedaDTO>();
@@ -120,6 +130,10 @@ public class MonedaServiceImpl implements MonedaService, IDatatable<Moneda> {
 	private void validarMoneda(MonedaDTO dto) {
 		if (!StringUtils.hasText(dto.getMonedaName())) {
 			throw new BaseException("Debe indicar el nombre de la moneda");
+		}
+		
+		if (monedaRepository.existsByNombre(dto.getMonedaName().trim())) {
+			throw new BaseException("Ya existe una Moneda con ese nombre");
 		}
 		
 		if (!StringUtils.hasText(dto.getMonedaDescripcion())) {

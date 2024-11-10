@@ -16,7 +16,7 @@
 				var header = /*[[${_csrf.headerName}]]*/;
 				var urlAjaxConsulta = /*[[@{/abmmoneda/getMonedas}]]*/;
 				var urlAlta = /*[[@{/abmmoneda/altaMoneda}]]*/;
-				var urlEditar = /*[[@{/abmmoneda/editarMonedas}]]*/;
+				var urlEditar = /*[[@{/abmmoneda/editarMoneda}]]*/;
 				var languageDatatable = /*[[@{/Datatables/Spanish.json}]]*/;
 				var nameDatatable = "bandejaABMMonedas"
 				$(document).ready(function() {
@@ -192,7 +192,7 @@
 					$('#descripcionModal').val(monedaDescripcion);
 					$("#estadoModal").val(estado);
 					$("#monedaModalLabel").text(`Editar Moneda ${monedaName}`);
-        			$("#formMoneda button[type=submit]").text("Editar");
+        			$("#formMoneda button[type=submit]").text("Guardar");
         			$("#formMoneda").attr("action", urlEditar);
 					$('#monedaModal').modal('show');
 				}
@@ -211,7 +211,7 @@
 					$( "div" ).remove( ".alert" );
 					limpiarCamposModal();
 					$("#monedaModalLabel").text(`Cargar Moneda`);
-        			$("#formMoneda button[type=submit]").text("Cargar");
+        			$("#formMoneda button[type=submit]").text("Guardar");
         			$("#formMoneda").attr("action", urlAlta);
 					$('#monedaModal').modal('show');
 				}

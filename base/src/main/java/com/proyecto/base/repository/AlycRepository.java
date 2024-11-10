@@ -7,4 +7,6 @@ import com.proyecto.base.repository.hql.ListRepository;
 
 public interface AlycRepository extends JpaRepository<Alyc, Long>, ListRepository<Alyc>{
 
+	boolean existsByNombre(String nombre);
+
 }

@@ -127,11 +127,11 @@ public class UsuarioServiceImpl implements UsuarioService, IDatatable<Usuario>{
 
 	private void validarUsuario(UsuarioDTO dto) {
 		
-	       if (usuarioRepository.existsByUsername(dto.getUsername())) {
+	       if (usuarioRepository.existsByUsername(dto.getUsername().trim())) {
 	            throw new IllegalArgumentException("El nombre de usuario ya está en uso.");
 	        }
 	       
-	       if (usuarioRepository.existsByEmail(dto.getEmail())) {
+	       if (usuarioRepository.existsByEmail(dto.getEmail().trim())) {
 	    	   throw new IllegalArgumentException("El email de usuario ya está en uso.");
 	       }
 		
@@ -228,7 +228,7 @@ public class UsuarioServiceImpl implements UsuarioService, IDatatable<Usuario>{
 		}
 		
 		if(StringUtils.hasText(apellidoForm) && !usuarioBD.esMiApellido(apellidoForm)) {
-			usuarioBD.setApellido(apellidoForm);
+			usuarioBD.setApellido(apellidoForm.toLowerCase());
 			cambio = true;
 		}
 		
@@ -239,13 +239,13 @@ public class UsuarioServiceImpl implements UsuarioService, IDatatable<Usuario>{
 		
 		if(!usuarioBD.esMiEmail(emailForm)) {
 			validarEmail(emailForm);
-			usuarioBD.setEmail(emailForm);
+			usuarioBD.setEmail(emailForm.toLowerCase());
 			cambio = true;
 		}
 		
 		if(!usuarioBD.esMiUsername(usernameForm)) {
 			validarUsername(usernameForm);
-			usuarioBD.setUsername(usernameForm);
+			usuarioBD.setUsername(usernameForm.toLowerCase());
 			cambio = true;
 		}
 		
@@ -267,7 +267,7 @@ public class UsuarioServiceImpl implements UsuarioService, IDatatable<Usuario>{
 	}
 
 	private void validarUsername(String usernameForm) {
-	       if (usuarioRepository.existsByUsername(usernameForm)) {
+	       if (usuarioRepository.existsByUsername(usernameForm.trim())) {
 	    	   throw new BaseException("El username ya está en uso.");
 	       }
 		
@@ -277,7 +277,7 @@ public class UsuarioServiceImpl implements UsuarioService, IDatatable<Usuario>{
 
 
 	private void validarEmail(String emailForm) {
-	       if (usuarioRepository.existsByEmail(emailForm)) {
+	       if (usuarioRepository.existsByEmail(emailForm.trim())) {
 	    	   throw new BaseException("El email de usuario ya está en uso.");
 	       }
 		

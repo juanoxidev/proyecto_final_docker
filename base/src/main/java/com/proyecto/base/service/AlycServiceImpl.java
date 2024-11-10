@@ -57,7 +57,7 @@ public class AlycServiceImpl implements AlycService, IDatatable<Alyc> {
 							 .auditoria(Auditoria.crearAuditoria(usuario))
 							 .porcentajeComision(formCreacion.getComision())
 							 .estado(formCreacion.getEstado())
-							 .nombre(formCreacion.getNombre())
+							 .nombre(formCreacion.getNombre().toUpperCase())
 							 .build();
 			
 			Alyc alycBD = alycRepository.save(alyc);
@@ -77,6 +77,10 @@ public class AlycServiceImpl implements AlycService, IDatatable<Alyc> {
 	private void validarAlyc(AlycDTO dto) {
 		if (!StringUtils.hasText(dto.getNombre())) {
 			throw new BaseException("Debe indicar el nombre de la Alyc");
+		}
+		
+		if (alycRepository.existsByNombre(dto.getNombre().trim())) {
+			throw new BaseException("Ya existe una Alyc con ese nombre");
 		}
 		
 		if (dto.getComision() == null) {
@@ -108,10 +112,15 @@ public class AlycServiceImpl implements AlycService, IDatatable<Alyc> {
 		
 		Alyc alycBD = alycRepository.getReferenceById(formCreacion.getIdAlyc());
 		
-		if(StringUtils.hasText(nombreForm) && !alycBD.esMiNombre(nombreForm)) {
+		if(StringUtils.hasText(nombreForm) && !alycBD.esMiNombre(nombreForm.trim())) {
+			if(validarSiYaExiste(nombreForm.trim())) {
+				throw new BaseException("Ya existe una Alyc con ese nombre");
+			};
 			alycBD.setNombre(nombreForm.toUpperCase());
 			cambio = true;
 		}
+		
+
 		
 		if(comisionForm != null && !alycBD.esMiComision(comisionForm)) {
 			alycBD.setPorcentajeComision(comisionForm);
@@ -143,6 +152,11 @@ public class AlycServiceImpl implements AlycService, IDatatable<Alyc> {
 		resp.setOk(cambio);
 		
 		return resp;
+	}
+
+
+	private boolean validarSiYaExiste(String nombreForm) {
+		return alycRepository.existsByNombre(nombreForm);
 	}
 	
 	

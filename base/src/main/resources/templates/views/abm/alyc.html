@@ -140,6 +140,13 @@
 								
 								}}, 
 				             { 
+
+								// <li>
+								// 				<a class="dropdown-item d-flex align-items-center" onclick='editarCotizaciones(${JSON.stringify(data)})'>
+                                //                    <i class="bi bi-clipboard2-check"></i>
+				                //                      <span>Editar Cotizaciones</span>
+				                //                  </a>
+				                //              </li>
 				                 data: null,
 				                 render: function(data, type, row) {
 			
@@ -154,12 +161,7 @@
 				                                     <span>Editar Alyc</span>
 				                                 </a>
 				                             </li>
-                                             <li>
-												<a class="dropdown-item d-flex align-items-center" onclick='editarCotizaciones(${JSON.stringify(data)})'>
-                                                   <i class="bi bi-clipboard2-check"></i>
-				                                     <span>Editar Cotizaciones</span>
-				                                 </a>
-				                             </li>
+
 				                         </ul>
 				                     `;
 								 }
@@ -184,7 +186,7 @@
 						tablaAlyc.on('click', 'td:not(:last-child)', function () {
 						var fila = tablaAlyc.row($(this).closest('tr')).data();
 			
-					    editarMoneda(fila);
+					    editarAlyc(fila);
 					
 
 
@@ -209,7 +211,7 @@
 					$('#comisionModal').val(comision);
 					$("#estadoModal").val(estado);
 					$("#alycModalLabel").text(`Editar Alyc ${nombre}`);
-        			$("#formAlyc button[type=submit]").text("Editar");
+        			$("#formAlyc button[type=submit]").text("Guardar");
         			$("#formAlyc").attr("action", urlEditar);
 					$('#alycModal').modal('show');
 				}
@@ -282,7 +284,7 @@
 					$( "div" ).remove( ".alert" );
 					limpiarCamposModal();
 					$("#alycModalLabel").text(`Cargar Alyc`);
-        			$("#formAlyc button[type=submit]").text("Cargar");
+        			$("#formAlyc button[type=submit]").text("Guardar");
         			$("#formAlyc").attr("action", urlAlta);
 					$('#alycModal').modal('show');
 				}

@@ -7,4 +7,6 @@ import com.proyecto.base.repository.hql.ListRepository;
 
 public interface MonedaRepository extends JpaRepository<Moneda, Long>, ListRepository<Moneda>{
 
+	boolean existsByNombre(String monedaName);
+
 }

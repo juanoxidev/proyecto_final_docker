@@ -164,7 +164,7 @@
 						var tablaUsuarios = $('#tablaUsuarios').DataTable();
 						tablaUsuarios.on('click', 'td:not(:last-child)', function () {
 						var fila = tablaUsuarios.row($(this).closest('tr')).data();
-						procesar(fila);
+						intentarEditar(fila);
 
 					})
 							tablaUsuarios.on('processing.dt', function(e, settings, processing) {
@@ -180,12 +180,11 @@
 				
 				function intentarEditar(usuario){
 					const {username, email, estado, apellido, nombre, id} = usuario;
-					console.log(usuario);
 					let urlVista = /*[[@{/abmusuarios/editarUsuario}]]*/;
 					$( "div" ).remove( ".alert" );
 					limpiarCamposModal();
 					$("#usuarioModalLabel").text("Editar Usuario");
-        			$("#formUsuario button[type=submit]").text("Editar");
+        			$("#formUsuario button[type=submit]").text("Guardar");
         			$("#formUsuario").attr("action", urlVista);
 					$('#username').val(username);
 					$('#email').val(email);
@@ -212,7 +211,7 @@
 					$( "div" ).remove( ".alert" );
 					limpiarCamposModal();
 					$("#usuarioModalLabel").text("Crear Usuario");
-        			$("#formUsuario button[type=submit]").text("Crear");
+        			$("#formUsuario button[type=submit]").text("Guardar");
         			$("#formUsuario").attr("action", urlVista);
 					$('#usuarioModal').modal('show');
 				}

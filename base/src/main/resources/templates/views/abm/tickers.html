@@ -192,7 +192,7 @@
 					$('#descripcionModal').val(tickerDescripcion);
 					$("#estadoModal").val(estado);
 					$("#tickerModalLabel").text(`Editar Ticker de ${tickerName}`);
-        			$("#formTicker button[type=submit]").text("Editar");
+        			$("#formTicker button[type=submit]").text("Guardar");
         			$("#formTicker").attr("action", urlEditar);
 					$('#tickerModal').modal('show');
 				}
@@ -211,7 +211,7 @@
 					$( "div" ).remove( ".alert" );
 					limpiarCamposModal();
 					$("#tickerModalLabel").text(`Cargar Ticker`);
-        			$("#formTicker button[type=submit]").text("Cargar");
+        			$("#formTicker button[type=submit]").text("Guardar");
         			$("#formTicker").attr("action", urlAlta);
 					$('#tickerModal').modal('show');
 				}

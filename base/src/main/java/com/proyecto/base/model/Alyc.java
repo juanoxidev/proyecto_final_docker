@@ -74,11 +74,11 @@ public class Alyc {
 	private Auditoria auditoria;
 
 	public boolean esMiNombre(String nombreForm) {
-		return this.nombre.equalsIgnoreCase(nombreForm);
+		return this.nombre.trim().equalsIgnoreCase(nombreForm.trim());
 	}
 
 	public boolean esMiComision(Double comisionForm) {
-		return this.porcentajeComision == comisionForm;
+		return this.porcentajeComision.compareTo(comisionForm) == 0;
 	}
 
 	public boolean esMiEstado(EstadosEnum estadoForm) {

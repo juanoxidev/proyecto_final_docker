@@ -83,6 +83,10 @@ public class TickerServiceImpl implements TickerService, IDatatable<Ticker> {
 			throw new BaseException("Debe indicar el nombre del ticker");
 		}
 		
+		if (validarSiYaExiste(dto.getTickerName().trim())) {
+			throw new BaseException("Ya existe un Ticker con ese nombre");
+		}
+		
 		if (!StringUtils.hasText(dto.getTickerDescripcion())) {
 			throw new BaseException("Debe indicar la descripcion del ticker");
 		}
@@ -109,6 +113,9 @@ public class TickerServiceImpl implements TickerService, IDatatable<Ticker> {
 		Ticker tickerBD = tickerRepository.getReferenceById(formCreacion.getTickerId());
 		
 		if(StringUtils.hasText(nombreForm) && !tickerBD.esMiNombre(nombreForm)) {
+			if (validarSiYaExiste(nombreForm)) {
+				throw new BaseException("Ya existe un Ticker con ese nombre");
+			}
 			tickerBD.setNombre(nombreForm.toUpperCase());
 			cambio = true;
 		}
@@ -144,4 +151,10 @@ public class TickerServiceImpl implements TickerService, IDatatable<Ticker> {
 		
 		return resp;
 	}
+	
+	
+	private boolean validarSiYaExiste(String nombreForm) {
+		return tickerRepository.existsByNombre(nombreForm.trim());
+	}
+
 }

@@ -115,7 +115,7 @@
 				         columns: [
 							 { data: 'nombre', onclick:"alert(1)"},
 							 { data: 'tienePlantilla', render: function(data, type, row) {
-								console.log(data);
+
 									if (data === true) {
 									
 									return 	`<i class="bi bi-check-circle-fill h3"  style="color:green;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="TIENE PLANTILLA"></i>`
@@ -128,7 +128,7 @@
 							 },
 							
 							 {data: 'estado', render: function(data, type, row) {
-									console.log(data);
+
 								if (data === 'ACTIVO') {
 								
 								return 	`<i class="bi bi-check-circle-fill h3"  style="color:green;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="ACTIVO"></i>`
@@ -196,11 +196,12 @@
 						tablaAlycs.on('click', 'td:not(:last-child)', function () {
 						var fila = tablaAlycs.row($(this).closest('tr')).data();
 						const {tienePlantilla} = fila;
-						
+						console.log(tienePlantilla)
 						if (tienePlantilla) {
-							cargarPlantilla(fila);
-						} else {
 							editarPlantilla(fila);
+						} else {
+							crearPlantilla(fila);
+							
 						}
 
 
@@ -230,7 +231,7 @@
 					$('#precioCliente').val(precioCliente);
 					$('#especie').val(especie);
 					$("#plantillaModalLabel").text(`Editar Plantilla de ${nombre}`);
-        			$("#formPlantilla button[type=submit]").text("Editar");
+        			$("#formPlantilla button[type=submit]").text("Guardar");
         			$("#formPlantilla").attr("action", urlVista);
 					$('#plantillaModal').modal('show');
 				}
@@ -252,7 +253,7 @@
 					limpiarCamposModal();
 					$("#alyc").val(idAlyc);
 					$("#plantillaModalLabel").text(`Cargar Plantilla de ${nombre}`);
-        			$("#formPlantilla button[type=submit]").text("Cargar");
+        			$("#formPlantilla button[type=submit]").text("Guardar");
         			$("#formPlantilla").attr("action", urlVista);
 					$('#plantillaModal').modal('show');
 				}

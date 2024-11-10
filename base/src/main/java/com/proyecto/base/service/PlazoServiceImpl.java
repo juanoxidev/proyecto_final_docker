@@ -60,6 +60,9 @@ public class PlazoServiceImpl implements PlazoService, IDatatable<Plazo> {
 		Plazo plazoBD = plazoRepository.getReferenceById(formCreacion.getPlazoId());
 		
 		if(StringUtils.hasText(nombreForm) && !plazoBD.esMiNombre(nombreForm)) {
+			if (validarSiYaExiste(nombreForm)) {
+				throw new BaseException("Ya existe un Plazo con ese nombre");
+			}
 			plazoBD.setNombre(nombreForm.toUpperCase());
 			cambio = true;
 		}
@@ -94,6 +97,10 @@ public class PlazoServiceImpl implements PlazoService, IDatatable<Plazo> {
 		return resp;
 	}
 
+	private boolean validarSiYaExiste(String nombreForm) {
+		return plazoRepository.existsByNombre(nombreForm.trim());
+	}
+
 	@Override
 	public ResponseDTO<PlazoDTO> crearPlazo(PlazoDTO dto, Usuario usuario) {
 		ResponseDTO<PlazoDTO> resp = new ResponseDTO<PlazoDTO>();
@@ -126,6 +133,10 @@ public class PlazoServiceImpl implements PlazoService, IDatatable<Plazo> {
 		
 		if (!StringUtils.hasText(dto.getPlazoName())) {
 			throw new BaseException("Debe indicar el nombre del plazo");
+		}
+		
+		if (validarSiYaExiste(dto.getPlazoName().trim())) {
+			throw new BaseException("Ya existe un Plazo con ese nombre");
 		}
 		
 		if (!StringUtils.hasText(dto.getPlazoDescripcion())) {

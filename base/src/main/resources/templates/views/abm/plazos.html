@@ -167,7 +167,7 @@
 						tablaPlazo.on('click', 'td:not(:last-child)', function () {
 						var fila = tablaPlazo.row($(this).closest('tr')).data();
 			
-					    editarMoneda(fila);
+					    editarPlazo(fila);
 					
 
 
@@ -192,7 +192,7 @@
 					$('#descripcionModal').val(plazoDescripcion);
 					$("#estadoModal").val(estado);
 					$("#plazoModalLabel").text(`Editar Plazo ${plazoName}`);
-        			$("#formPlazo button[type=submit]").text("Editar");
+        			$("#formPlazo button[type=submit]").text("Guardar");
         			$("#formPlazo").attr("action", urlEditar);
 					$('#plazoModal').modal('show');
 				}
@@ -211,7 +211,7 @@
 					$( "div" ).remove( ".alert" );
 					limpiarCamposModal();
 					$("#plazoModalLabel").text(`Cargar Plazo`);
-        			$("#formPlazo button[type=submit]").text("Cargar");
+        			$("#formPlazo button[type=submit]").text("Guardar");
         			$("#formPlazo").attr("action", urlAlta);
 					$('#plazoModal').modal('show');
 				}
