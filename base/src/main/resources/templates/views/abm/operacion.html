@@ -192,18 +192,7 @@ $("#formExportar").on("submit", function(event) {
 							 { data: 'fecha', onclick:"alert(1)"},
                              { data: 'alycName', onclick:"alert(1)"},
                              { data: 'cliente', onclick:"alert(1)"},
-                             { data: 'tipoOperacion', render: function(data, type, row) {
-									console.log(data);
-								if (data === 'C') {
-								
-								return 	"COMPRA";
-								
-								} else {
-								
-									return "VENTA";
-								}
-								
-								}},
+                             { data: 'tipoOperacion'},
                              { data: 'plazoName', onclick:"alert(1)"},
                              { data: 'tickerName', onclick:"alert(1)"},
                              { data: 'cantidadNominal', onclick:"alert(1)"},
