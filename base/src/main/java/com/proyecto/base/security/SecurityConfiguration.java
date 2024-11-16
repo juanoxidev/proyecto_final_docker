@@ -42,32 +42,49 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        // Configuración de encabezados
         http.headers().frameOptions().sameOrigin();
+
+        // Configuración de CORS
+        http.cors()
+            .configurationSource(request -> {
+                org.springframework.web.cors.CorsConfiguration cors = new org.springframework.web.cors.CorsConfiguration();
+                cors.setAllowedOrigins(java.util.Arrays.asList("http://frontend-dominio.com"));
+                cors.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE"));
+                cors.setAllowedHeaders(java.util.Arrays.asList("Authorization", "Content-Type", "X-CSRF-TOKEN"));
+                cors.setAllowCredentials(true);
+                return cors;
+            });
+
+        // Configuración de CSRF
         http.csrf()
-        	.csrfTokenRepository(cookieCsrfTokenRepository())
-        	.ignoringAntMatchers("/h2-console/**") ;
+            .csrfTokenRepository(cookieCsrfTokenRepository())
+            .ignoringAntMatchers("/h2-console/**");
+
+        // Configuración de rutas
         http.authorizeRequests()
             .antMatchers("/js/**", "/css/**", "/img/**", "/h2-console/**").permitAll()
             .antMatchers("/restablecer-password").permitAll()
-            .anyRequest().authenticated() 
+            .anyRequest().authenticated()
             .and()
-            .formLogin().loginPage("/login")
-            .permitAll()
-            .loginProcessingUrl("/procesa_login")
-            .failureUrl("/login?error=true")
-            .successHandler(customAuthenticationSuccessHandler())
-            .failureHandler(customAuthenticationFailureHandler())
+            .formLogin()
+                .loginPage("/login")
+                .permitAll()
+                .loginProcessingUrl("/procesa_login")
+                .failureUrl("/login?error=true")
+                .successHandler(customAuthenticationSuccessHandler())
+                .failureHandler(customAuthenticationFailureHandler())
             .and()
             .logout()
-            .invalidateHttpSession(true)
-            .clearAuthentication(true)
-            .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-            .logoutSuccessUrl("/login?logout")
-            .permitAll()
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/login?logout")
+                .permitAll()
             .and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS);
+            .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.ALWAYS);
     }
-
     private CsrfTokenRepository cookieCsrfTokenRepository() {
     	  CookieCsrfTokenRepository repository = new CookieCsrfTokenRepository();
           repository.setCookieHttpOnly(true);

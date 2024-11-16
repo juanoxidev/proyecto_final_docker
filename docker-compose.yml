@@ -3,17 +3,19 @@ services:
   app_contexto: 
     build: base
     mem_limit: 512m
-    ports :
+    ports:
       - "8080:8080"
-    environment :
+    environment:
       DB_URL: jdbc:mysql://contexto_invest:3306/prueba?createDatabaseIfNotExist=true&serverTimezone=UTC
       DB_USER_NAME: root
       DB_PASSWORD: 1234
     restart: always
-    depends_on :
+    depends_on:
       contexto_invest:
-          condition: service_healthy
-          
+        condition: service_healthy
+    networks:
+      - app-network
+
   contexto_invest:
     image: mysql:8.0.33
     ports:
@@ -26,6 +28,12 @@ services:
       - ./init-scripts:/docker-entrypoint-initdb.d 
     restart: always
     healthcheck:
-        test: ["CMD", "mysqladmin" , "ping", "-h", "localhost"]
-        timeout: 10s
-        retries: 10
+      test: ["CMD", "mysqladmin" , "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
