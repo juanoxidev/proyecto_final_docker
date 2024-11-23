@@ -82,6 +82,30 @@ public class LinkedHashMapDeOperaciones {
 
 		}
 	}
+	
+	public void compararOperacionesRojas(LinkedHashMapDeOperaciones reporteDeOperacionesAjeno,ArrayList<OperacionReporteDTO> contextoAzul,ArrayList<OperacionReporteDTO> alycAzul) {
+
+		System.out.println(" COMPARANDO LOS REPORTES en el metodo de LinkedHashMapDeOperaciones 'comparar'");
+
+		for (LocalDate fecha : operaciones.keySet()) {
+
+			/*System.out.println("LA FECHA en (comparar) de (LinkedHashMapDeOperaciones) es : " + fecha);
+			System.out.println("LA FECHA en (comparar) de (LinkedHashMapDeOperaciones) es : " + fecha);
+
+			System.out.println();*/
+
+			ListaEnlazadaDeOperaciones listaDeOperacionesActual = this.operaciones.get(fecha);
+			ListaEnlazadaDeOperaciones listaAjenaDeOperaciones = reporteDeOperacionesAjeno.getLista(fecha);
+
+			if (listaAjenaDeOperaciones != null) {
+				compararListasRojas(listaDeOperacionesActual, listaAjenaDeOperaciones,contextoAzul,alycAzul);
+				System.out.println("la Lista ajena SI TIENE la fecha: " + fecha);
+			} else {
+				System.out.println("la Lista ajena no tiene la fecha: " + fecha);
+			}
+
+		}
+	}
 
 	public int llenarSheet(Sheet sheet, int posRow) {
 
@@ -176,6 +200,35 @@ public class LinkedHashMapDeOperaciones {
 
 				System.out.println("Booleano para saber si se pudo borrar de la ListaAjena: " + b);
 
+			}
+		}
+		eliminarOperaciones(operacionesAEliminarActual, listaDeOperacionesActual);
+	}
+	
+	
+	private void compararListasRojas(ListaEnlazadaDeOperaciones listaDeOperacionesActual,
+			ListaEnlazadaDeOperaciones listaAjenaDeOperaciones,ArrayList<OperacionReporteDTO> contextoAzul,ArrayList<OperacionReporteDTO> alycAzul) {
+
+		
+		OperacionReporteDTO operacionBuscada = null;
+		List<OperacionReporteDTO> operacionesAEliminarActual = new LinkedList<>();
+
+		for (OperacionReporteDTO operacion : listaDeOperacionesActual) {
+			
+			operacionBuscada = listaAjenaDeOperaciones.tenesEstaOperacionRoja(operacion, contextoAzul, alycAzul);
+
+			if (operacionBuscada == null) {
+				System.out.println("");
+				System.out.println("");
+				System.out.println("operacionBuscada NULLA");
+				System.out.println("operacionBuscada NULLA");
+				System.out.println("");
+				System.out.println("");
+			}
+
+			if (operacionBuscada != null) {
+				operacionesAEliminarActual.add(operacion);
+				listaAjenaDeOperaciones.remove(operacionBuscada);
 			}
 		}
 		eliminarOperaciones(operacionesAEliminarActual, listaDeOperacionesActual);

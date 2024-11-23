@@ -39,6 +39,32 @@ public class UtilComparacioDeOperaciones {
 		        && compararPrecioCliente(operacionActual.getPrecioCliente(), operacionAjena.getPrecioCliente());
 	}
 	
+	public static boolean compararOperacionesSinLaFechaYConElPrecioDeCompraYVentaINVERTIDOS (OperacionReporteDTO operacionActual, OperacionReporteDTO operacionAjena) {
+		return compararEspecie(operacionActual.getEspecie(), operacionAjena.getEspecie())
+		        && compararCantidadVN(operacionActual.getCantidadVN(), operacionAjena.getCantidadVN())
+		        && compararPrecioMesa(operacionActual.getPrecioMesa(), operacionAjena.getPrecioCliente())
+		        && compararPrecioCliente(operacionActual.getPrecioCliente(), operacionAjena.getPrecioMesa());
+	}
+	
+	public static boolean compararOperacionesConElPrecioDeCompraYVentaINVERTIDOS (OperacionReporteDTO operacionActual, OperacionReporteDTO operacionAjena) {
+		return  compararFechas(operacionActual.getFecha(), operacionAjena.getFecha())
+				&& compararEspecie(operacionActual.getEspecie(), operacionAjena.getEspecie())
+		        && compararCantidadVN(operacionActual.getCantidadVN(), operacionAjena.getCantidadVN())
+		        && compararPrecioMesa(operacionActual.getPrecioMesa(), operacionAjena.getPrecioCliente())
+		        && compararPrecioCliente(operacionActual.getPrecioCliente(), operacionAjena.getPrecioMesa());
+	}
+	
+	public static boolean compararOperacionesConPequeñasDiferenciasEnPreciosYFechas(OperacionReporteDTO operacionActual, OperacionReporteDTO operacionAjena) {
+		
+		boolean verificacion=false;
+		
+		if(compararOperacionesSinLaFecha(operacionActual,operacionAjena) || compararOperacionesSinLaFechaYConElPrecioDeCompraYVentaINVERTIDOS(operacionActual,operacionAjena)) {
+			verificacion=true;
+		}
+		
+		return verificacion;
+	}
+	
 	public static boolean sonIgualesSacandoLaFecha (Row row, OperacionReporteDTO operacionActual) {
 		// Validar si la celda de "ESPECIE" no es nula y comparar
 	    if (row.getCell(IndiceExcel.ESPECIE.getPos()) == null || 
@@ -61,6 +87,35 @@ public class UtilComparacioDeOperaciones {
 	    // Validar si la celda de "PRECIOCLIENTE" no es nula y comparar
 	    if (row.getCell(IndiceExcel.PRECIOCLIENTE.getPos()) == null || 
 	        !compararPrecioCliente(operacionActual.getPrecioCliente(), row.getCell(IndiceExcel.PRECIOCLIENTE.getPos()).getNumericCellValue())) {
+	        return false;
+	    }
+
+	    // Si todas las comparaciones fueron exitosas, retornar verdadero
+	    return true;
+	}
+	
+	public static boolean sonIgualesSacandoLaFechaYInvirtiendoPreciosDeCompraYCliente (Row row, OperacionReporteDTO operacionActual) {
+		// Validar si la celda de "ESPECIE" no es nula y comparar
+	    if (row.getCell(IndiceExcel.ESPECIE.getPos()) == null || 
+	        !compararEspecie(operacionActual.getEspecie(), row.getCell(IndiceExcel.ESPECIE.getPos()).getStringCellValue())) {
+	        return false;
+	    }
+
+	    // Validar si la celda de "CANTIDADVN" no es nula y comparar
+	    if (row.getCell(IndiceExcel.CANTIDADVN.getPos()) == null || 
+	        !compararCantidadVN(operacionActual.getCantidadVN(), (int) row.getCell(IndiceExcel.CANTIDADVN.getPos()).getNumericCellValue())) {
+	        return false;
+	    }
+
+	    // Validar si la celda de "PRECIOMESA" no es nula y comparar
+	    if (row.getCell(IndiceExcel.PRECIOMESA.getPos()) == null || 
+	        !compararPrecioMesa(operacionActual.getPrecioMesa(), row.getCell(IndiceExcel.PRECIOCLIENTE.getPos()).getNumericCellValue())) {
+	        return false;
+	    }
+
+	    // Validar si la celda de "PRECIOCLIENTE" no es nula y comparar
+	    if (row.getCell(IndiceExcel.PRECIOCLIENTE.getPos()) == null || 
+	        !compararPrecioCliente(operacionActual.getPrecioCliente(), row.getCell(IndiceExcel.PRECIOMESA.getPos()).getNumericCellValue())) {
 	        return false;
 	    }
 
