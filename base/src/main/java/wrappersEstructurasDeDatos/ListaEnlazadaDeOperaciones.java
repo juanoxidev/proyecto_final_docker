@@ -48,6 +48,37 @@ public class ListaEnlazadaDeOperaciones extends LinkedList<OperacionReporteDTO> 
 
 		return operacion;
 	}
+	
+	public OperacionReporteDTO tenesEstaOperacionRoja(OperacionReporteDTO operacionAjena,ArrayList<OperacionReporteDTO> contextoAzul,ArrayList<OperacionReporteDTO> alycAzul) {
+		OperacionReporteDTO operacion = null;
+
+		System.out.println("ejecutando 'tenesEstaOperacion'");
+
+		Iterator<OperacionReporteDTO> iterator = this.iterator(); // Obtener el iterator
+		while (iterator.hasNext() && operacion == null) { // Verificar si hay más elementos
+			OperacionReporteDTO operacionActual = iterator.next(); // Obtener el siguiente elemento
+
+			System.out.println("la operacionAjena tiene fecha: " + operacionActual.getFecha());
+			System.out.println("la operacionAjena tiene fecha: " + operacionActual.getFecha());
+			System.out.println("la operacionAjena tiene fecha: " + operacionActual.getFecha());
+			
+			
+			
+			
+			if(sonIgualesVerificandoLosPreciosInvertidos(operacionActual, operacionAjena)) {
+				operacion = operacionActual;
+				alycAzul.add(operacionActual);
+				contextoAzul.add(operacionAjena);
+			} /*else if (UtilComparacioDeOperaciones.compararOperacionesConPequeñasDiferenciasEnPreciosYFechas(operacionActual,operacionAjena) ) {
+				operacion = operacionActual;
+				alycAmarillas.add(operacionActual);
+				contextoAmarillas.add(operacionAjena);}*/ // TODO elimnar todo lo relacionada con amarilla aca ,ya que dentro de este flujo del metodo este y los llamados, NUNca podria ser amarilla. ya que las lista que se comparan de los maps es por "fecha" entonces te va a dar 2 listas de la misma fecha , por ende es un conjunto de datos agrupados por un valor en comun ,"fecha" si no lo comparten nunca van a cruzarse por que el valor en comun nunca es igual ,"fecha"
+
+			
+		}
+
+		return operacion;
+	}
 
 	public void mostrarOperacionesInternas() {
 		for (OperacionReporteDTO element : this) {
@@ -138,6 +169,21 @@ public class ListaEnlazadaDeOperaciones extends LinkedList<OperacionReporteDTO> 
 
 		return UtilComparacioDeOperaciones.compararOperaciones(operacionPropia, operacionAjena);
 	}
+	
+	private boolean sonIgualesSacandoLaFecha(OperacionReporteDTO operacionPropia, OperacionReporteDTO operacionAjena) {
+
+		return UtilComparacioDeOperaciones.compararOperacionesSinLaFecha(operacionPropia, operacionAjena);
+	}
+	private boolean sonIgualesVerificandoLosPreciosInvertidos(OperacionReporteDTO operacionPropia, OperacionReporteDTO operacionAjena) {
+
+		return UtilComparacioDeOperaciones.compararOperacionesConElPrecioDeCompraYVentaINVERTIDOS(operacionPropia, operacionAjena);
+	}
+	
+	private boolean sonIgualesSacandoLaFechaYConLosPreciosInvertidos(OperacionReporteDTO operacionPropia, OperacionReporteDTO operacionAjena) {
+		return UtilComparacioDeOperaciones.compararOperacionesSinLaFechaYConElPrecioDeCompraYVentaINVERTIDOS(operacionPropia, operacionAjena);
+	}
+	
+	
 
 	public void llenarListConOperaciones(ArrayList<OperacionReporteDTO> list) {
 		for (OperacionReporteDTO operacion : this) {
