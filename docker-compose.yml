@@ -25,7 +25,8 @@ services:
       MYSQL_PASSWORD: 1234
       MYSQL_DATABASE: prueba
     volumes:
-      - ./init-scripts:/docker-entrypoint-initdb.d 
+      - ./init-scripts:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql  
     restart: always
     healthcheck:
       test: ["CMD", "mysqladmin" , "ping", "-h", "localhost"]
@@ -34,6 +35,21 @@ services:
     networks:
       - app-network
 
+  backup_service:
+    image: alpine
+    volumes:
+      - mysql_data:/data          # Volumen de datos de MySQL
+      - ./init-scripts:/backup    # Carpeta que contiene backup.sh        
+      - ~/.config/rclone:/root/.config/rclone # Credenciales de rclone
+    entrypoint: ["sh", "-c", "apk add --no-cache rclone && while true; do /backup/backup.sh; sleep 86400; done"]
+    restart: always
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  mysql_data:
+  backup_service:
