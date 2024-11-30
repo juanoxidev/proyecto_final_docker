@@ -1,8 +1,11 @@
+# Crear los directorios si no existen
+mkdir -p ./backups
+mkdir -p ./logs
 
 # Variables
 DATE=$(date +"%Y-%m-%d_%H-%M-%S")
-BACKUP_FILE="/backup/mysql_data-$DATE.tar.gz"
-LOG_FILE="/backup/backup.log"
+BACKUP_FILE="./backups/mysql_data-$DATE.tar.gz"
+LOG_FILE="./logs/backup.log"
 
 # Crear un backup comprimido del volumen montado
 echo "$(date +"%Y-%m-%d %H:%M:%S") - Iniciando respaldo de MySQL..." >> "$LOG_FILE"
@@ -26,7 +29,7 @@ fi
 
 # Eliminar backups locales mayores a 7 días
 echo "$(date +"%Y-%m-%d %H:%M:%S") - Eliminando backups locales mayores a 7 días..." >> "$LOG_FILE"
-find /backup -type f -name "*.tar.gz" -mtime +7 -exec rm {} \; >> "$LOG_FILE" 2>&1
+find ./backups -type f -name "*.tar.gz" -mtime +7 -exec rm {} \; >> "$LOG_FILE" 2>&1
 if [ $? -eq 0 ]; then
     echo "$(date +"%Y-%m-%d %H:%M:%S") - Backups locales eliminados" >> "$LOG_FILE"
 else

@@ -38,10 +38,11 @@ services:
   backup_service:
     image: alpine
     volumes:
-      - mysql_data:/data          # Volumen de datos de MySQL
-      - ./init-scripts:/backup    # Carpeta que contiene backup.sh        
-      - ~/.config/rclone:/root/.config/rclone # Credenciales de rclone
-    entrypoint: ["sh", "-c", "apk add --no-cache rclone && while true; do /backup/backup.sh; sleep 86400; done"]
+      - mysql_data:/data            # Volumen de datos de MySQL
+      - ./backups:/backups          # Carpeta que contiene backup.sh 
+      - ./logs:/logs                # Mapea el volumen de logs
+      - ~/.config/rclone:/root/.config/rclone  # Credenciales de rclone
+    entrypoint: ["sh", "-c", "apk add --no-cache rclone && while true; do /backups/backup.sh; sleep 86400; done"]
     restart: always
     networks:
       - app-network
@@ -53,3 +54,4 @@ networks:
 volumes:
   mysql_data:
   backup_service:
+  logs: # Asegúrate de definir el volumen para logs
