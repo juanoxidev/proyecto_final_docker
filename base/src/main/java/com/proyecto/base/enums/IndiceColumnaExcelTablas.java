@@ -3,10 +3,10 @@ public enum IndiceColumnaExcelTablas {
 
 	contextoAMARILLO(8),
 	alycAMARRILLO(15),
-	contextoAZUL(22),
-	alycAZUL(29),
-	contextoVERDE(36),
-	alycVERDE(43);
+	contextoAZUL(36),
+	alycAZUL(43),// 22 29 36 43
+	contextoVERDE(22),
+	alycVERDE(29);
 	
 	
 	

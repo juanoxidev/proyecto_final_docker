@@ -1,6 +1,7 @@
 package com.proyecto.base.util;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.poi.ss.usermodel.Row;
 
@@ -65,6 +66,38 @@ public class UtilComparacioDeOperaciones {
 		return verificacion;
 	}
 	
+    public static boolean compararOperacionesPeroConOtroFormatoEnLaFecha (OperacionReporteDTO operacionContexto, OperacionReporteDTO operacionAlyc) {
+		
+		
+		return     compararFechasConFormatosInvertidos(operacionContexto.getFecha(), operacionAlyc.getFecha())
+		        && compararEspecie(operacionContexto.getEspecie(), operacionAlyc.getEspecie())
+		        && compararCantidadVN(operacionContexto.getCantidadVN(), operacionAlyc.getCantidadVN())
+		        && compararPrecioMesa(operacionContexto.getPrecioMesa(), operacionAlyc.getPrecioMesa())
+		        && compararPrecioCliente(operacionContexto.getPrecioCliente(), operacionAlyc.getPrecioCliente());
+	}
+	
+    public static boolean compararOperacionesConLasFechasInvertidasYElPrecioDeCompraYVentaINVERTIDOS (OperacionReporteDTO operacionContexto, OperacionReporteDTO operacionALyc) {
+		return     compararFechasConFormatosInvertidos(operacionContexto.getFecha(), operacionALyc.getFecha())
+				&& compararEspecie(operacionContexto.getEspecie(), operacionALyc.getEspecie())
+		        && compararCantidadVN(operacionContexto.getCantidadVN(), operacionALyc.getCantidadVN())
+		        && compararPrecioMesa(operacionContexto.getPrecioMesa(), operacionALyc.getPrecioCliente())
+		        && compararPrecioCliente(operacionContexto.getPrecioCliente(), operacionALyc.getPrecioMesa());
+	}
+    
+    private static boolean compararFechasConFormatosInvertidos(LocalDate fechaOperacionContexto,LocalDate fechaOperacionAlyc) {
+    	boolean verificacion =false;
+    	DateTimeFormatter formatoSalidaFechaAlyc = DateTimeFormatter.ofPattern("MM/dd/yy");
+    	DateTimeFormatter formatoSalidaFechaContexto = DateTimeFormatter.ofPattern("dd/MM/yy");
+    	String fechaFormateadaALYC = fechaOperacionAlyc.format(formatoSalidaFechaAlyc);
+    	String fechaFormateadaContexto= fechaOperacionContexto.format(formatoSalidaFechaContexto);
+    	
+    	if(fechaFormateadaALYC.equals(fechaFormateadaContexto)) {
+    		verificacion=true;
+    	}
+    	
+    	return verificacion;
+    };
+
 	public static boolean sonIgualesSacandoLaFecha (Row row, OperacionReporteDTO operacionActual) {
 		// Validar si la celda de "ESPECIE" no es nula y comparar
 	    if (row.getCell(IndiceExcel.ESPECIE.getPos()) == null || 

@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +47,7 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 	@Autowired
 	private AlycRepository alycRepository;
 
-	private int pepe2 = 2;
+	
 	private static final DataFormatter formatter = new DataFormatter();
 	private static final int primeraHoja = 0;
 
@@ -61,21 +62,38 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 		AlycsEnum alycEnum = AlycsEnum.buscarAlyc(alycNombre);
 
-		switch (alycEnum) {
-		case TOMARINVERSIONES:
-			excelFinalConLasDispariedades = comparacionParaTomarInversiones(contextoReporte, alycReporte, alyc,
-					alycEnum);
-			break;
-		case NACIONBURSATIL:
-			// Código a ejecutar si variable == valor2
-			break;
-		// Puedes agregar más casos
-		default:
-			// Código a ejecutar si no coincide con ningún caso
-		}
+		/*
+		 * switch (alycEnum) { case TOMARINVERSIONES: excelFinalConLasDispariedades =
+		 * comparacionParaTomarInversiones(contextoReporte, alycReporte, alyc,
+		 * alycEnum); break; case NACIONBURSATIL: // Código a ejecutar si variable ==
+		 * valor2 break; // Puedes agregar más casos default: // Código a ejecutar si no
+		 * coincide con ningún caso }
+		 */
+		excelFinalConLasDispariedades = generarExcelConDispariedadesDependiendoElAlyc(contextoReporte, alycReporte,
+				alyc, alycEnum);
 
 		return excelFinalConLasDispariedades;
 
+	}
+
+	private byte[] generarExcelConDispariedadesDependiendoElAlyc(byte[] contextoReporte, byte[] alycReporte, Alyc alyc,
+			AlycsEnum alycEnum) {
+		byte[] excelFinalConLasDispariedades = null;
+
+		switch (alycEnum) {
+		case TOMARINVERSIONES:
+			excelFinalConLasDispariedades = comparacionParaTomarInversiones(contextoReporte, alycReporte, alyc,alycEnum);
+			break;
+		case NACIONBURSATIL:
+			//excelFinalConLasDispariedades= comparacionParaNacionBursatil(contextoReporte, alycReporte, alyc,alycEnum);
+			// Código a ejecutar si variable == valor2
+			break;
+
+		default:
+
+		}
+
+		return excelFinalConLasDispariedades;
 	}
 
 	// VOLAR EL TRYCATCH DE ACA
@@ -93,8 +111,8 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		ArrayList<OperacionReporteDTO> alycOperacionesVERDES = new ArrayList<OperacionReporteDTO>();
 		ArrayList<OperacionReporteDTO> contextoAmarillas = new ArrayList<OperacionReporteDTO>();
 		ArrayList<OperacionReporteDTO> alycAmarillas = new ArrayList<OperacionReporteDTO>();
-		ArrayList<OperacionReporteDTO> contextoAzul = new ArrayList<OperacionReporteDTO>();
-		ArrayList<OperacionReporteDTO> alycAzul = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO> contextoVerderOscuro = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO> alycVerdeOscuro = new ArrayList<OperacionReporteDTO>();
 
 		try (InputStream contextoInputStream = new ByteArrayInputStream(contextoReporte);
 				InputStream alycInputStream = new ByteArrayInputStream(alycReporte)) {
@@ -163,19 +181,22 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 			// se comparan los reportes y se eliman las coincidencias, solo quedaran las
 			// disparariedades en cada reporte respectivo (ROJAS)
+
+			// aca se separan las verdes Claras de las ROJAS, las operaciones que queden en
+			// los maps son "ROJAS"
 			compararOperaciones(contextoOperacionesMap, alycOperacionesMap, contextoOperacionesVERDES,alycOperacionesVERDES);
 
-			separarOperacionesRojasEnCeleste(contextoOperacionesMap, alycOperacionesMap,contextoAzul, alycAzul);
-			separarOperacionesRojasEnAMARILLAS(contextoOperacionesMap,alycOperacionesMap,contextoAmarillas,alycAmarillas);
+			// aca se separan de las operaciones "ROJAS" en verdeOscuro
+			separarOperacionesRojasEnCeleste(contextoOperacionesMap, alycOperacionesMap, contextoVerderOscuro,alycVerdeOscuro);
+
+			// aca se separan las operaciones "ROJAS" en amarillas
+			separarOperacionesRojasEnAMARILLAS(contextoOperacionesMap, alycOperacionesMap, contextoAmarillas,alycAmarillas);
 
 			System.out.println(" GENERAR EXCEL CON DISPARIEDADES");
 			System.out.println(" GENERAR EXCEL CON DISPARIEDADES");
 			System.out.println(" GENERAR EXCEL CON DISPARIEDADES");
 
-			// OJOTAAAA
-
-			// cambios DESDE ACA // cambios DESDE ACA // cambios DESDE ACA // cambios DESDE
-			// ACA // cambios DESDE ACA // cambios DESDE ACA
+			segundoFiltradoDeOperacionesAmarillasPorSiAlgunaEsOperacionVerde(contextoAmarillas,alycAmarillas,contextoOperacionesVERDES,alycOperacionesVERDES,contextoVerderOscuro,alycVerdeOscuro);
 
 			// se recorren las disparariedades correspondientes y se agregan a un excel
 			// final
@@ -183,19 +204,16 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			// debes llenar el excel con las ROJAS y las que son "amrrillas" deberian ir a
 			// otra lista aparte, para alyc y para coontext
 
-			//se crea y se llena el excel con las operaciones ROJAS
-			excelFinalConLasDispariedades = generarExcelConLasDisparidades(contextoOperacionesMap, alycOperacionesMap,
-					alycEnum);
-
-			//definicionDeCeldasAmarillas(excelFinalConLasDispariedades,contextoOperacionesMap,
-			// alycOperacionesMap);
+			// se crea y se llena el excel con las operaciones ROJAS
+			excelFinalConLasDispariedades = generarExcelConLasDisparidades(contextoOperacionesMap, alycOperacionesMap,alycEnum);
 
 			llenarExcelConlasOperacionesQueCoinciden(excelFinalConLasDispariedades, contextoOperacionesVERDES,alycOperacionesVERDES);
+			
 			llenarExcelConlasOperacionesAMARILLAS(excelFinalConLasDispariedades, contextoAmarillas, alycAmarillas);
-			llenarExcelConlasOperacionesCELESTES(excelFinalConLasDispariedades, contextoAzul, alycAzul);
+			
+			llenarExcelConlasOperacionesVerdesOscuras(excelFinalConLasDispariedades, contextoVerderOscuro,alycVerdeOscuro, contextoOperacionesVERDES.size());
 
-			// HASTA ACA HASTA ACAHASTA ACA HASTA ACAHASTA ACA HASTA ACA HASTA ACA HASTA ACA
-			// HASTA ACA HASTA ACA HASTA ACA HASTA ACA HASTA ACA HASTA ACA HASTA ACA
+			
 
 			ExcelFINAL = convertirAVectorDeBytes(excelFinalConLasDispariedades);
 
@@ -216,32 +234,33 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 	private void llenarExcelConlasOperacionesQueCoinciden(Workbook excelFinalConLasDispariedades,
 			ArrayList<OperacionReporteDTO> contextoOperacionesOK, ArrayList<OperacionReporteDTO> alycOperacionesOK) {
-		
+
 		System.out.println("INICIA LLENAR CON VERDES");
-		
+
 		Sheet sheet = excelFinalConLasDispariedades.getSheetAt(primeraHoja);
 		int espacioCeldasContexto = IndiceColumnaExcelTablas.contextoVERDE.getPos();
 		int espacioCeldasAlyc = IndiceColumnaExcelTablas.alycVERDE.getPos();
-		int posRowEncabezado = 1;
 		int posRowNombreTabla = 0;
+		int posRowEncabezado = 1;
+		int cantDeFilasOcupadasPorLosEncabezados= 2;
 
 		agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasContexto,
 				"CONTEXTO - Operaciones OK");
 		agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasContexto);
-		llenarSheetDeOperacionesOK(sheet, contextoOperacionesOK, espacioCeldasContexto);
+		llenarSheetDeOperacionesOK(sheet, contextoOperacionesOK, espacioCeldasContexto,cantDeFilasOcupadasPorLosEncabezados);
 
 		agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasAlyc, "ALYC - Operaciones OK");
 		agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasAlyc);
-		llenarSheetDeOperacionesOK(sheet, alycOperacionesOK, espacioCeldasAlyc);
-		
- 		
+		llenarSheetDeOperacionesOK(sheet, alycOperacionesOK, espacioCeldasAlyc,cantDeFilasOcupadasPorLosEncabezados);
+
 		System.out.println("FINALIZA LLENAR CON VERDES");
 
 	}
 
 	private void llenarExcelConlasOperacionesAMARILLAS(Workbook excelFinalConLasDispariedades,
-			ArrayList<OperacionReporteDTO> contextoOperacionesOK, ArrayList<OperacionReporteDTO> alycOperacionesOK) throws Exception {
-		
+			ArrayList<OperacionReporteDTO> contextoOperacionesOK, ArrayList<OperacionReporteDTO> alycOperacionesOK)
+			throws Exception {
+
 		System.out.println("INICIA LLENAR CON AMARILLAS");
 
 		Sheet sheet = excelFinalConLasDispariedades.getSheetAt(primeraHoja);
@@ -252,9 +271,10 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		int cantFilasReservasParaEncabezados = posRowEncabezado + 1;
 
 		try {
-			agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasContexto,"CONTEXTO - Operaciones con FECHA es DISTINTA");
+			agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasContexto,
+					"CONTEXTO - Operaciones con FECHA es DISTINTA");
 			System.out.println("SE AGREGO EK DESCRIPTIVO DE LA TABLA");
-			
+
 			agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasContexto);
 			System.out.println("SE AGREGO EK DESCRIPTIVO EL ENCABEZADO");
 			llenarSheetDeOperacionesAMARILLAS(sheet, contextoOperacionesOK, espacioCeldasContexto,
@@ -266,20 +286,72 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasAlyc);
 			llenarSheetDeOperacionesAMARILLAS(sheet, alycOperacionesOK, espacioCeldasAlyc,
 					cantFilasReservasParaEncabezados);
-		}catch (Exception e) {
-			System.out.println("ERROR EN AMARILLAS: "+e.getMessage());
-			throw new Exception ("ERROR en AMARILLAS: "+e.getMessage());
+		} catch (Exception e) {
+			System.out.println("ERROR EN AMARILLAS: " + e.getMessage());
+			throw new Exception("ERROR en AMARILLAS: " + e.getMessage());
 		}
-		
-		
+
 		System.out.println("FINALIZA LLENAR CON AMARILLAS");
 
-
+	}
+	
+	private void segundoFiltradoDeOperacionesAmarillasPorSiAlgunaEsOperacionVerde(ArrayList<OperacionReporteDTO> contextoAmarillas,ArrayList<OperacionReporteDTO>alycAmarillas,ArrayList<OperacionReporteDTO> contextoVerdesClaras,ArrayList<OperacionReporteDTO>alycVerdesClaras,ArrayList<OperacionReporteDTO> contextoVerdesOscuras,ArrayList<OperacionReporteDTO>alycVerdesOscuras ) {
+		
+		OperacionReporteDTO operacionAlyc=null;
+		OperacionReporteDTO operacionContexto=null;
+		ArrayList<OperacionReporteDTO>operacionesAmarillasAEliminarDeLaAlyc = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO>operacionesAmarillasAEliminarDeContexto = new ArrayList<OperacionReporteDTO>();
+		
+		try {
+			
+			//se recorren las operaciones de la Alyc, ya que solo estas pueden presentar variaciones Inesperadas en las fechas 
+			for (int i=0;i<alycAmarillas.size();i++) {
+				operacionAlyc=alycAmarillas.get(i);
+				operacionContexto=contextoAmarillas.get(i);
+				
+				// se validan que las operaciones no sean null
+                if(operacionAlyc!=null && operacionContexto!=null) {
+                	
+                	if(UtilComparacioDeOperaciones.compararOperacionesPeroConOtroFormatoEnLaFecha(operacionContexto,operacionAlyc)) {
+                		
+                		contextoVerdesClaras.add(operacionContexto);
+                		alycVerdesClaras.add(operacionAlyc);
+                		operacionesAmarillasAEliminarDeLaAlyc.add(operacionAlyc);
+                		operacionesAmarillasAEliminarDeContexto.add(operacionContexto);
+                		
+                	}else if(UtilComparacioDeOperaciones.compararOperacionesConLasFechasInvertidasYElPrecioDeCompraYVentaINVERTIDOS(operacionContexto,operacionAlyc)) {
+                		
+                		contextoVerdesOscuras.add(operacionContexto);
+                		alycVerdesOscuras.add(operacionAlyc);
+                		operacionesAmarillasAEliminarDeLaAlyc.add(operacionAlyc);
+                		operacionesAmarillasAEliminarDeContexto.add(operacionContexto);
+                		
+                	}
+                	
+                }
+				
+				
+			}
+			
+			eliminarOperacionesDeLaLista(alycAmarillas,operacionesAmarillasAEliminarDeLaAlyc);
+			eliminarOperacionesDeLaLista(contextoAmarillas,operacionesAmarillasAEliminarDeContexto);
+			
+		}catch (Exception e) {
+			System.out.println("error en 'segundoFiltradoDeOperacionesAmarillasPorSiAlgunaEsOperacionVerde' : "+e.getMessage());
+		}
+			
+	}
+	
+	private void eliminarOperacionesDeLaLista(ArrayList<OperacionReporteDTO>alycAmarillas,ArrayList<OperacionReporteDTO>operacionesAmarillasAEliminarDeLaAlyc ) {
+		for(int i=0;i<operacionesAmarillasAEliminarDeLaAlyc.size();i++) {
+			alycAmarillas.remove(operacionesAmarillasAEliminarDeLaAlyc.get(i));
+		}
 	}
 
-	private void llenarExcelConlasOperacionesCELESTES(Workbook excelFinalConLasDispariedades,
-			ArrayList<OperacionReporteDTO> contextoOperacionesOK, ArrayList<OperacionReporteDTO> alycOperacionesOK) throws Exception {
-		
+	/*private void llenarExcelConlasOperacionesCELESTES(Workbook excelFinalConLasDispariedades,
+			ArrayList<OperacionReporteDTO> contextoOperacionesOK, ArrayList<OperacionReporteDTO> alycOperacionesOK)
+			throws Exception {
+
 		System.out.println("INICIA LLENAR CON CELESTES");
 
 		Sheet sheet = excelFinalConLasDispariedades.getSheetAt(primeraHoja);
@@ -290,35 +362,74 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		int cantFilasReservasParaEncabezados = posRowEncabezado + 1;
 
 		try {
-			agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasContexto,"CONTEXTO - Operaciones con los Precios INVERTIDOS");
+			agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasContexto,
+					"CONTEXTO - Operaciones con los Precios INVERTIDOS");
 			System.out.println("SE AGREGO EK DESCRIPTIVO DE LA TABLA");
 
 			agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasContexto);
 			System.out.println("SE AGREGO EK encabezado DE LA TABLA");
 
-			llenarSheetDeOperacionesCELESTES(sheet, contextoOperacionesOK, espacioCeldasContexto,cantFilasReservasParaEncabezados);
+			llenarSheetDeOperacionesCELESTES(sheet, contextoOperacionesOK, espacioCeldasContexto,
+					cantFilasReservasParaEncabezados);
 			System.out.println("llenando con celestes el excel");
-
 
 			agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasAlyc,
 					"ALYC - Operaciones con los Precios INVERTIDOS");
 			agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasAlyc);
-			llenarSheetDeOperacionesCELESTES(sheet, alycOperacionesOK, espacioCeldasAlyc, cantFilasReservasParaEncabezados);
-		}catch(Exception e) {
-			System.out.println("ERROR en CELESTES: "+e.getMessage());
-			throw new Exception ("ERROR en CELESTES: "+e.getMessage());
+			llenarSheetDeOperacionesCELESTES(sheet, alycOperacionesOK, espacioCeldasAlyc,
+					cantFilasReservasParaEncabezados);
+		} catch (Exception e) {
+			System.out.println("ERROR en CELESTES: " + e.getMessage());
+			throw new Exception("ERROR en CELESTES: " + e.getMessage());
 		}
-		
-		
 
-		
 		System.out.println("FINALIZA LLENAR CON CELESTES");
 
-		
+	}*/
+
+	private void llenarExcelConlasOperacionesVerdesOscuras(Workbook excelFinalConLasDispariedades,
+			ArrayList<OperacionReporteDTO> contextoOperacionesOK, ArrayList<OperacionReporteDTO> alycOperacionesOK,
+			int filaEnLaQueTerminoLasOperacionesVerdeClaras) throws Exception {
+
+		System.out.println("INICIA LLENAR CON Verdes Oscuras");
+
+		Sheet sheet = excelFinalConLasDispariedades.getSheetAt(primeraHoja);
+		int espacioCeldasContexto = IndiceColumnaExcelTablas.contextoVERDE.getPos();
+		int espacioCeldasAlyc = IndiceColumnaExcelTablas.alycVERDE.getPos();
+		int posRowNombreTabla = filaEnLaQueTerminoLasOperacionesVerdeClaras + 2;
+		int posRowEncabezado = posRowNombreTabla + 1;
+		int cantFilasReservasParaEncabezados = posRowEncabezado + 1;
+
+		try {
+			agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasContexto,
+					"CONTEXTO - Operaciones con los Precios INVERTIDOS");
+			System.out.println("SE AGREGO EK DESCRIPTIVO DE LA TABLA");
+
+			agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasContexto);
+			System.out.println("SE AGREGO EK encabezado DE LA TABLA");
+
+			llenarSheetDeOperacionesVerdeOscura(sheet, contextoOperacionesOK, espacioCeldasContexto,
+					cantFilasReservasParaEncabezados);
+			System.out.println("llenando con celestes el excel");
+
+			agregarNombreInicialDescriptivoDeLaTabla(sheet, posRowNombreTabla, espacioCeldasAlyc,
+					"ALYC - Operaciones con los Precios INVERTIDOS");
+			System.out.println("SE AGREGO EK DESCRIPTIVO DE LA TABLA");
+			agregarEncabezadoConEspacio(sheet, posRowEncabezado, espacioCeldasAlyc);
+			System.out.println("SE AGREGO EK encabezado DE LA TABLA");
+			llenarSheetDeOperacionesVerdeOscura(sheet, alycOperacionesOK, espacioCeldasAlyc,
+					cantFilasReservasParaEncabezados);
+			System.out.println("llenando con verdeOscura el excel");
+		} catch (Exception e) {
+			System.out.println("ERROR en VERDES OSCURAS: " + e.getMessage());
+			throw new Exception("ERROR en VERDES OSCURAS: " + e.getMessage());
+		}
+
+		System.out.println("FINALIZA LLENAR CON VERDES OSCURAS");
+
 	}
 
-	private void agregarNombreInicialDescriptivoDeLaTabla(Sheet sheet, int posRowNombreTabla, int espacioCell,
-			String msg) {
+	private void agregarNombreInicialDescriptivoDeLaTabla(Sheet sheet, int posRowNombreTabla, int espacioCell,String msg) {
 		crearRowPorSiNoExiste(sheet, posRowNombreTabla);
 		Row row = sheet.getRow(posRowNombreTabla);
 		crearCeldasPorSiNoExisten(row, 1, espacioCell);
@@ -327,21 +438,23 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 	}
 
 	private void llenarSheetDeOperacionesOK(Sheet sheet, ArrayList<OperacionReporteDTO> operacionesOK,
-			int espacioCell) {
+			int espacioCell,int cantDeFilasOcupadasPorLosEncabezados) {
 
 		Row row = null;
 		OperacionReporteDTO operacion = null;
-		int espacio = 2;
-		// ArrayList<Row> aPintarDeVerde= new ArrayList<Row>();
+		int espacioQueOcupanLosEncabezados = cantDeFilasOcupadasPorLosEncabezados;
+		int posRowActual=0;
 
 		// espacio es igual a 2, porque las primeras 2 rows estan reservadas para el
 		// Titulo y encabezado de la tabla en particular
 		// ACA TODO
-		for (int i = espacio; i <= operacionesOK.size(); i++) {
-			row = sheet.getRow(i);
-			operacion = operacionesOK.get(i - espacio);
+		for (int i = 0; i < operacionesOK.size(); i++) {
+			posRowActual =i+espacioQueOcupanLosEncabezados;
+			crearRowPorSiNoExiste(sheet, posRowActual);
+			row = sheet.getRow(posRowActual);
+			operacion = operacionesOK.get(i);
 
-			crearRowPorSiNoExiste(sheet, i);
+			
 
 			if (operacion != null) {
 				llenarRowConOperacion(row, operacion, espacioCell, sheet.getWorkbook());
@@ -357,6 +470,7 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 		Row row = null;
 		OperacionReporteDTO operacion = null;
+		int posRowActual=0;
 		// int espacio= 2;
 		// ArrayList<Row> aPintarDeVerde= new ArrayList<Row>();
 
@@ -364,10 +478,12 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		// Titulo y encabezado de la tabla en particular
 		// ACA TODO
 		for (int i = 0; i < operacionesAMARILLAS.size(); i++) {
-			row = sheet.getRow(i + cantFilasYaReservadas);
+			posRowActual=i+cantFilasYaReservadas;
+			crearRowPorSiNoExiste(sheet, posRowActual);
+			row = sheet.getRow(posRowActual);
 			operacion = operacionesAMARILLAS.get(i);
 
-			crearRowPorSiNoExiste(sheet, i);
+			
 
 			if (operacion != null) {
 				llenarRowConOperacionCeldaAmarilla(row, operacion, posColumna, sheet.getWorkbook());
@@ -378,7 +494,7 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		}
 	}
 
-	private void llenarSheetDeOperacionesCELESTES(Sheet sheet, ArrayList<OperacionReporteDTO> operacionesCELESTES,
+	/*private void llenarSheetDeOperacionesCELESTES(Sheet sheet, ArrayList<OperacionReporteDTO> operacionesCELESTES,
 			int posColumna, int cantFilasYaReservadas) {
 
 		Row row = null;
@@ -390,10 +506,11 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		// Titulo y encabezado de la tabla en particular
 		// ACA TODO
 		for (int i = 0; i < operacionesCELESTES.size(); i++) {
+			crearRowPorSiNoExiste(sheet, i);
 			row = sheet.getRow(i + cantFilasYaReservadas);
 			operacion = operacionesCELESTES.get(i);
 
-			crearRowPorSiNoExiste(sheet, i);
+			
 
 			if (operacion != null) {
 				llenarRowConOperacionCeldaCeleste(row, operacion, posColumna, sheet.getWorkbook());
@@ -402,6 +519,61 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 				// utilsFonts.PintarDeVerde(aPintarDeVerde)
 			}
 		}
+	}*/
+
+	private void llenarSheetDeOperacionesVerdeOscura(Sheet sheet, ArrayList<OperacionReporteDTO> operacionesVerdesOscuras,
+			int posColumna, int cantFilasYaReservadas) throws Exception {
+
+		Row row = null;
+		OperacionReporteDTO operacion = null;
+		// int espacio= 2;
+		// ArrayList<Row> aPintarDeVerde= new ArrayList<Row>();
+
+		// espacio es igual a 2, porque las primeras 2 rows estan reservadas para el
+		// Titulo y encabezado de la tabla en particular
+
+		if (operacionesVerdesOscuras == null) {
+			System.out.println("opereacionesVerdesOscuras es NULL");
+		}
+		
+		System.out.println("el tamaño de las verdes oscuras es de : "+ operacionesVerdesOscuras.size());
+		
+		
+
+		// ACA TODO
+		for (int i = 0; i < operacionesVerdesOscuras.size(); i++) {
+			
+			int pos = i+cantFilasYaReservadas;
+
+			try {
+				
+				System.out.println("CANTIDAD DE FILAS YA RESERVADAS:"+ cantFilasYaReservadas);
+				crearRowPorSiNoExiste(sheet, pos);
+				
+				row = sheet.getRow(pos);
+				operacion = operacionesVerdesOscuras.get(i);
+
+				System.out.println("mostrando antes :"+operacion.toString());
+
+				if (operacion != null && row !=null) {
+					System.out.println("OPERACION VERDE OSCURA");
+					System.out.println("------------------------------");
+					System.out.println(operacion.toString());
+					
+					
+					llenarRowConOperacionCeldaVerdeOscura(row, operacion, posColumna, sheet.getWorkbook());
+					// modularizar los fonts en un utils.fonts. TODO
+					// aPintarDeVerde.add(Cell);
+					// utilsFonts.PintarDeVerde(aPintarDeVerde)
+				}
+			} catch (Exception e) {
+              System.out.println("ERROR en llenarSheetDeOperacionesVerdeOscura :"+e.getMessage());
+              //throw new Exception("ERROR en llenarSheetDeOperacionesVerdeOscura :" +e.getMessage());
+			}
+
+		}
+		
+		
 	}
 
 	private void crearRowPorSiNoExiste(Sheet sheet, int pos) {
@@ -536,7 +708,7 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		blueBoldStyle.setFont(font);
 
 		// Establecer el color de fondo verde claro
-		blueBoldStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+		blueBoldStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
 		blueBoldStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
 		// Definir los bordes con color negro
@@ -575,6 +747,88 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 	}
 
+	private void llenarRowConOperacionCeldaVerdeOscura(Row row, OperacionReporteDTO operacion, int espacioCell,Workbook workbook) throws Exception {
+		
+		
+		
+		if(row ==null) throw new Exception ("ROW NULLA");
+		if(workbook == null) throw new Exception ("wb null");
+		if(operacion==null) throw new Exception ("OPERACION NULLA");
+		if(espacioCell<=1) throw new Exception ("espacio cell mal "+espacioCell);
+		
+		
+		/*try {
+			 cantAtributosDeOperacion = OperacionReporteDTO.class.getDeclaredFields().length;
+			 formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+			 fechaString = operacion.getFecha() != null ? operacion.getFecha().format(formatter)
+					: "Fecha no disponible";
+
+			
+		} catch (Exception e) {
+			System.out.println("ERROR en la conversion de la fecha");
+			System.out.println(e.getMessage());
+			System.out.println("este es el tracktrace");
+			System.out.println(e.getStackTrace());
+			throw new Exception ("");
+			
+		}*/
+		
+		
+				
+		int cantAtributosDeOperacion = OperacionReporteDTO.class.getDeclaredFields().length;
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+		String fechaString = operacion.getFecha() != null ? operacion.getFecha().format(formatter)
+						: "Fecha no disponible";
+				// Crear y aplicar el CellStyle para celdas verdes claras con texto en negrita
+							CellStyle greenBoldStyleV2 = workbook.createCellStyle();
+
+							// Crear la fuente para el texto en negrita
+							Font font = workbook.createFont();
+							font.setBold(true); // Texto en negrita
+							greenBoldStyleV2.setFont(font);
+
+							// Establecer el color de fondo verde claro
+							greenBoldStyleV2.setFillForegroundColor(IndexedColors.GREEN.getIndex()); // Verde claro
+							greenBoldStyleV2.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+							// Definir los bordes con color negro
+							greenBoldStyleV2.setBorderBottom(BorderStyle.THIN); // Borde inferior
+							greenBoldStyleV2.setBottomBorderColor(IndexedColors.BLACK.getIndex()); // Color del borde inferior
+							greenBoldStyleV2.setBorderTop(BorderStyle.THIN); // Borde superior
+							greenBoldStyleV2.setTopBorderColor(IndexedColors.BLACK.getIndex()); // Color del borde superior
+							greenBoldStyleV2.setBorderLeft(BorderStyle.THIN); // Borde izquierdo
+							greenBoldStyleV2.setLeftBorderColor(IndexedColors.BLACK.getIndex()); // Color del borde izquierdo
+							greenBoldStyleV2.setBorderRight(BorderStyle.THIN); // Borde derecho
+							greenBoldStyleV2.setRightBorderColor(IndexedColors.BLACK.getIndex()); // Color del borde derecho
+
+							// Crear las celdas si no existen
+							crearCeldasPorSiNoExisten(row, cantAtributosDeOperacion, espacioCell);
+
+							// Llenar cada celda y aplicar el estilo
+							Cell fechaCell = row.getCell(IndiceExcel.FECHA.getPos() + espacioCell);
+							fechaCell.setCellValue(fechaString);
+							fechaCell.setCellStyle(greenBoldStyleV2);
+
+							Cell especieCell = row.getCell(IndiceExcel.ESPECIE.getPos() + espacioCell);
+							especieCell.setCellValue(operacion.getEspecie());
+							especieCell.setCellStyle(greenBoldStyleV2);
+
+							Cell cantidadVNCell = row.getCell(IndiceExcel.CANTIDADVN.getPos() + espacioCell);
+							cantidadVNCell.setCellValue(operacion.getCantidadVN());
+							cantidadVNCell.setCellStyle(greenBoldStyleV2);
+
+							Cell precioMesaCell = row.getCell(IndiceExcel.PRECIOMESA.getPos() + espacioCell);
+							precioMesaCell.setCellValue(operacion.getPrecioMesa());
+							precioMesaCell.setCellStyle(greenBoldStyleV2);
+
+							Cell precioClienteCell = row.getCell(IndiceExcel.PRECIOCLIENTE.getPos() + espacioCell);
+							precioClienteCell.setCellValue(operacion.getPrecioCliente());
+							precioClienteCell.setCellStyle(greenBoldStyleV2);
+			
+		
+		
+	}
+
 	private void crearCeldasPorSiNoExisten(Row row, int cantCeldasACrear, int espacioEntreCell) {
 		Cell cell = null;
 		int posCell = 0;
@@ -589,39 +843,44 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		}
 
 	}
-	
-	private void separarOperacionesRojasEnAMARILLAS(LinkedHashMapDeOperaciones contextoMap,LinkedHashMapDeOperaciones alycMap,ArrayList<OperacionReporteDTO> contextoListAmarillas,ArrayList<OperacionReporteDTO> alycListaAmarillas) {
+
+	private void separarOperacionesRojasEnAMARILLAS(LinkedHashMapDeOperaciones contextoMap,
+			LinkedHashMapDeOperaciones alycMap, ArrayList<OperacionReporteDTO> contextoListAmarillas,
+			ArrayList<OperacionReporteDTO> alycListaAmarillas) {
 		ArrayList<OperacionReporteDTO> contextoOperacionesRojasList = contextoMap.generarArrayList();
 		ArrayList<OperacionReporteDTO> alycOperacionesRojasList = alycMap.generarArrayList();
-		
-		llenarLasListaConOperacionesAmarillasYEliminarLasOperacionesAmarillasDeLosMaps(contextoMap,alycMap,contextoOperacionesRojasList,alycOperacionesRojasList,contextoListAmarillas,alycListaAmarillas);
+
+		llenarLasListaConOperacionesAmarillasYEliminarLasOperacionesAmarillasDeLosMaps(contextoMap, alycMap,
+				contextoOperacionesRojasList, alycOperacionesRojasList, contextoListAmarillas, alycListaAmarillas);
 
 	}
-	
-	private void llenarLasListaConOperacionesAmarillasYEliminarLasOperacionesAmarillasDeLosMaps( LinkedHashMapDeOperaciones contextoMap,LinkedHashMapDeOperaciones alycMap,ArrayList<OperacionReporteDTO> contextoOperacionesRojasList,ArrayList<OperacionReporteDTO> alycOperacionesRojasList,ArrayList<OperacionReporteDTO> contextoListAmarillas,ArrayList<OperacionReporteDTO> alycListaAmarillas) {
-		
-		OperacionReporteDTO operacionBuscada=null;
-		
+
+	private void llenarLasListaConOperacionesAmarillasYEliminarLasOperacionesAmarillasDeLosMaps(
+			LinkedHashMapDeOperaciones contextoMap, LinkedHashMapDeOperaciones alycMap,
+			ArrayList<OperacionReporteDTO> contextoOperacionesRojasList,
+			ArrayList<OperacionReporteDTO> alycOperacionesRojasList,
+			ArrayList<OperacionReporteDTO> contextoListAmarillas, ArrayList<OperacionReporteDTO> alycListaAmarillas) {
+
+		OperacionReporteDTO operacionBuscada = null;
 
 		for (OperacionReporteDTO operacion : contextoOperacionesRojasList) {
-			
-			operacionBuscada= tieneEstaOperacionYSonCasiIgualesSacandoLaFechaYConElPrecioInvertidoV2(alycOperacionesRojasList, operacion);
-			
-			if (operacionBuscada!=null) {
+
+			operacionBuscada = tieneEstaOperacionYSonCasiIgualesSacandoLaFechaYConElPrecioInvertidoV2(
+					alycOperacionesRojasList, operacion);
+
+			if (operacionBuscada != null) {
 				contextoMap.eliminar(operacion);
-				//contextoOperacionesRojasList.remove(operacion);
+				// contextoOperacionesRojasList.remove(operacion);
 				contextoListAmarillas.add(operacion);
-				
+
 				alycMap.eliminar(operacionBuscada);
 				alycOperacionesRojasList.remove(operacionBuscada);
 				alycListaAmarillas.add(operacionBuscada);
-				
-				
+
 			}
 		}
 	}
-	
-	
+
 	private void definicionDeCeldasAmarillas(Workbook workbook, LinkedHashMapDeOperaciones contextoMap,
 			LinkedHashMapDeOperaciones alycMap) {
 		ArrayList<OperacionReporteDTO> contextList = contextoMap.generarArrayList();
@@ -715,21 +974,21 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 		return verificacion;
 	};
-	
-	
-	
-	private OperacionReporteDTO tieneEstaOperacionYSonCasiIgualesSacandoLaFechaYConElPrecioInvertidoV2(ArrayList<OperacionReporteDTO> alycListOperacionesRojas, OperacionReporteDTO operacionBuscadaContexto) {
+
+	private OperacionReporteDTO tieneEstaOperacionYSonCasiIgualesSacandoLaFechaYConElPrecioInvertidoV2(
+			ArrayList<OperacionReporteDTO> alycListOperacionesRojas, OperacionReporteDTO operacionBuscadaContexto) {
 		boolean verificacion = false;
 		int i = 0;
-		OperacionReporteDTO operacionEncontrada=null;
+		OperacionReporteDTO operacionEncontrada = null;
 
 		while (i < alycListOperacionesRojas.size() && !verificacion) {
 			OperacionReporteDTO operacionActual = alycListOperacionesRojas.get(i);
 
-			if (UtilComparacioDeOperaciones.compararOperacionesConPequeñasDiferenciasEnPreciosYFechas(operacionActual,operacionBuscadaContexto)) {
+			if (UtilComparacioDeOperaciones.compararOperacionesConPequeñasDiferenciasEnPreciosYFechas(operacionActual,
+					operacionBuscadaContexto)) {
 				verificacion = true;
-				operacionEncontrada=operacionActual;
-				
+				operacionEncontrada = operacionActual;
+
 			} else {
 				i++;
 			}
@@ -931,42 +1190,22 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		agregarEncabezado(sheet, posRow++);
 		posRow = alycMap.llenarSheet(sheet, posRow++);
 
-		System.out.println("MOSTRANDO EXCEL FINAL DE LAS DISPARIEDADES");
-		System.out.println("MOSTRANDO EXCEL FINAL DE LAS DISPARIEDADES");
-		System.out.println("MOSTRANDO EXCEL FINAL DE LAS DISPARIEDADES");
-
-		try {
-			for (Row row : sheet) {
-				for (Cell cell : row) {
-					switch (cell.getCellType()) {
-					case STRING:
-						System.out.print(cell.getStringCellValue() + "\t");
-						break;
-					case NUMERIC:
-						System.out.print(cell.getNumericCellValue() + "\t");
-						break;
-					case BOOLEAN:
-						System.out.print(cell.getBooleanCellValue() + "\t");
-						break;
-					case FORMULA:
-						System.out.print(cell.getCellFormula() + "\t");
-						break;
-					case BLANK:
-						System.out.print(" \t");
-						break;
-					case ERROR:
-						System.out.print("ERROR\t");
-						break;
-					default:
-						System.out.print("UNKNOWN\t");
-						break;
-					}
-				}
-				System.out.println(); // Nueva línea después de cada fila
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		/*
+		 * System.out.println("MOSTRANDO EXCEL FINAL DE LAS DISPARIEDADES");
+		 * System.out.println("MOSTRANDO EXCEL FINAL DE LAS DISPARIEDADES");
+		 * System.out.println("MOSTRANDO EXCEL FINAL DE LAS DISPARIEDADES");
+		 * 
+		 * try { for (Row row : sheet) { for (Cell cell : row) { switch
+		 * (cell.getCellType()) { case STRING:
+		 * System.out.print(cell.getStringCellValue() + "\t"); break; case NUMERIC:
+		 * System.out.print(cell.getNumericCellValue() + "\t"); break; case BOOLEAN:
+		 * System.out.print(cell.getBooleanCellValue() + "\t"); break; case FORMULA:
+		 * System.out.print(cell.getCellFormula() + "\t"); break; case BLANK:
+		 * System.out.print(" \t"); break; case ERROR: System.out.print("ERROR\t");
+		 * break; default: System.out.print("UNKNOWN\t"); break; } }
+		 * System.out.println(); // Nueva línea después de cada fila } } catch
+		 * (Exception e) { e.printStackTrace(); }
+		 */
 
 		// Cerrar el Workbook para liberar recursos
 		return workbook; // Devolver los bytes
@@ -993,23 +1232,26 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			LinkedHashMapDeOperaciones alycMap, ArrayList<OperacionReporteDTO> contextoAzul,
 			ArrayList<OperacionReporteDTO> alycAzul) {
 		contextoMap.compararOperacionesRojas(alycMap, contextoAzul, alycAzul);
-		
-        System.out.println("-----------------------------------------------------------");
-        System.out.println("-----------------------------------------------------------");
-		 if(contextoAzul.isEmpty()) {System.out.println(" CONTEXTO AZUL VACIA ");}
-		 if(alycAzul.isEmpty()) {System.out.println(" ALYC AZUL VACIA ");}
-		 System.out.println("-----------------------------------------------------------");
-		 System.out.println("-----------------------------------------------------------");
-	
-		
+
+		System.out.println("-----------------------------------------------------------");
+		System.out.println("-----------------------------------------------------------");
+		if (contextoAzul.isEmpty()) {
+			System.out.println(" CONTEXTO AZUL VACIA ");
+		}
+		if (alycAzul.isEmpty()) {
+			System.out.println(" ALYC AZUL VACIA ");
+		}
+		System.out.println("-----------------------------------------------------------");
+		System.out.println("-----------------------------------------------------------");
+
 		for (int i = 0; i < contextoAzul.size(); i++) {
 			System.out.println("CONTEXTO - AZUL");
-			System.out.println(contextoAzul.get(i).toString()); 
+			System.out.println(contextoAzul.get(i).toString());
 
 		}
 		for (int i = 0; i < alycAzul.size(); i++) {
 			System.out.println("ALYC - AZUL");
-			System.out.println(alycAzul.get(i).toString()); 
+			System.out.println(alycAzul.get(i).toString());
 		}
 
 	}
@@ -1102,7 +1344,9 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		System.out.println(" EJECUTANDO METODO 'convertirSheetAMap' 2 ");
 
 		System.out.println(" EJECUTANDO METODO 'convertirSheetAMap'  bucle ");
-		for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+		int posicionDondeArrancanLasOperaciones=1;
+		
+		for (int i = posicionDondeArrancanLasOperaciones; i <= sheet.getLastRowNum(); i++) {
 
 			Row row = sheet.getRow(i);
 			if (row != null) {
@@ -1279,5 +1523,3 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
  * 
  * // chequear este return TODO return excelFinalConLasDispariedades; } }
  */
-
-
