@@ -5,19 +5,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -34,6 +36,7 @@ import com.proyecto.base.dto.OperacionReporteDTO;
 import com.proyecto.base.enums.AlycsEnum;
 import com.proyecto.base.enums.IndiceColumnaExcelTablas;
 import com.proyecto.base.enums.IndiceExcel;
+import com.proyecto.base.enums.NacionBursatilEnum;
 import com.proyecto.base.model.Alyc;
 import com.proyecto.base.model.Plantilla;
 import com.proyecto.base.repository.AlycRepository;
@@ -57,8 +60,7 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		byte[] excelFinalConLasDispariedades = null;
 		String alycNombre = alyc.getNombre();
 
-		if (alycNombre == null)
-			throw new Exception("NOMBRE DE LA ALYC ES NULL");
+		if (alycNombre == null) throw new Exception("NOMBRE DE LA ALYC ES NULL");
 
 		AlycsEnum alycEnum = AlycsEnum.buscarAlyc(alycNombre);
 
@@ -85,7 +87,7 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			excelFinalConLasDispariedades = comparacionParaTomarInversiones(contextoReporte, alycReporte, alyc,alycEnum);
 			break;
 		case NACIONBURSATIL:
-			//excelFinalConLasDispariedades= comparacionParaNacionBursatil(contextoReporte, alycReporte, alyc,alycEnum);
+			excelFinalConLasDispariedades= comparacionParaNacionBursatil(contextoReporte, alycReporte, alyc,alycEnum);
 			// Código a ejecutar si variable == valor2
 			break;
 
@@ -98,6 +100,272 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 	// VOLAR EL TRYCATCH DE ACA
 
+	private byte[] comparacionParaNacionBursatil(byte[] contextoReporte, byte[] alycReporte, Alyc alyc,AlycsEnum alycEnum) {
+
+		Workbook excelFinalConLasDispariedades = null;
+		LinkedHashMapDeOperaciones contextoOperacionesMap = null;
+		LinkedHashMapDeOperaciones alycOperacionesMap = null;
+		Workbook AlycExcelModificado = null;
+		Workbook AlycExcelConSoloOperaciones=null;
+		int año = -1;
+		byte[] ExcelFINAL = null;
+		ArrayList<OperacionReporteDTO> contextoOperacionesVERDES = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO> alycOperacionesVERDES = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO> contextoAmarillas = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO> alycAmarillas = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO> contextoVerderOscuro = new ArrayList<OperacionReporteDTO>();
+		ArrayList<OperacionReporteDTO> alycVerdeOscuro = new ArrayList<OperacionReporteDTO>();
+		LinkedList<Row>filasDeCaucionesDelAlyc = new LinkedList<Row>();
+		LinkedList<Row>filasDeCaucionesDeContexto = new LinkedList<Row>();
+		
+		
+		try (InputStream contextoInputStream = new ByteArrayInputStream(contextoReporte);InputStream alycInputStream = new ByteArrayInputStream(alycReporte)){
+			
+			validarSiAlgunoEsNull(contextoReporte, alycReporte, alyc);
+
+			Workbook contextoWorkbook = new XSSFWorkbook(contextoInputStream);
+			Workbook alycWorkbook = new XSSFWorkbook(alycInputStream);
+
+			// imprimirEncabezado ( contextoWorkbook.getSheetAt(0));
+			// iterarSheet(contextoWorkbook.getSheetAt(0));
+
+			System.out.println(" NORMALIZANDO LOS NUMERO DEL EXCEL DE CONTEXTO");
+			System.out.println(" NORMALIZANDO LOS NUMERO DEL EXCEL DE CONTEXTO");
+			System.out.println(" NORMALIZANDO LOS NUMERO DEL EXCEL DE CONTEXTO");
+
+			normalizarPrecios(contextoWorkbook);
+
+			iterarSheet(contextoWorkbook.getSheetAt(0));
+
+			System.out.println("MULTIPLICANDO LOS PRECIOS DE CONTEXTO POR 100");
+			System.out.println("MULTIPLICANDO LOS PRECIOS DE CONTEXTO POR 100");
+			System.out.println("MULTIPLICANDO LOS PRECIOS DE CONTEXTO POR 100");
+
+			multiplicarPreciosX100SiEsNecesario(contextoWorkbook, alycEnum.hayQueMultiplicarValores());
+
+			iterarSheet(contextoWorkbook.getSheetAt(0));
+
+			// se mete a un map(ordenado por fecha) cada fila del excel
+			// se meten los datos del reporteContexto a un map
+
+			System.out.println(" EJECUTANDO PROCESAR REPORTE PARA  CONTEXTO");
+			System.out.println(" EJECUTANDO PROCESAR REPORTE PARA  CONTEXTO");
+			System.out.println(" EJECUTANDO PROCESAR REPORTE PARA  CONTEXTO");
+
+			contextoOperacionesMap = procesarReporte(contextoWorkbook);
+			System.out.println("--------------------------------------------------------");
+			System.out.println("--------------------------------------------------------");
+
+			contextoOperacionesMap.mostrarHashMap();
+			System.out.println("--------------------------------------------------------");
+			System.out.println("--------------------------------------------------------");
+
+			// obtenemos el año actual de las operaciones, el cual usaremos en el siguiente
+			// metodo para agregarle la fecha si asi lo precisare
+			año = contextoOperacionesMap.obtenerAñoDePrimeraFecha();
+
+			
+			ConverterAFormatoEstandar.cambiarNombreColumnas(alycWorkbook,alyc.getPlantilla());
+			
+			AlycExcelConSoloOperaciones= convertirExcelAExcelDeSoloOperaciones(alycWorkbook.getSheetAt(0));
+			AlycExcelConSoloOperaciones = estandarizarReporte(AlycExcelConSoloOperaciones, alyc.getPlantilla(), año, alyc);
+			eliminarRowsPorAlgunCriterioBasadoEnUnaColumna(AlycExcelConSoloOperaciones,NacionBursatilEnum.NacionBursatil.getTipoDeOperacion(),NacionBursatilEnum.NacionBursatil.getPalabraBuscada(),filasDeCaucionesDelAlyc);
+
+			
+			iterarSheet(AlycExcelConSoloOperaciones.getSheetAt(0));
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+            ExcelFINAL = convertirAVectorDeBytes(AlycExcelConSoloOperaciones);
+			
+			return ExcelFINAL;
+			
+						
+			
+			//throw new Exception ("PERFECTO HASTA AHORA");
+			
+			//normalizarPrecios(alycWorkbook);
+			
+			
+			
+			
+			
+			
+		}catch (Exception ex) {
+			System.err.println("al comparar Reportes hubo un error: " + ex.getMessage());
+			System.out.println();
+			System.out.println("el TOSTRING : " + ex.toString());
+			System.out.println();
+			System.out.println("la traza: ");
+			ex.printStackTrace();
+		}
+		
+		
+		return ExcelFINAL;
+	}
+	
+	
+	private Workbook convertirExcelAExcelDeSoloOperaciones(Sheet sheetOriginal) throws Exception {
+		Workbook excelFiltrado= new XSSFWorkbook();
+		Sheet primeraHoja = excelFiltrado.createSheet();
+		int max=0;
+		int indiceDeLaColumnaQueTieneLaFecha=0;
+		
+		try {
+			if(sheetOriginal==null) throw new Exception ("|| El sheet recibido es Nullo");
+			indiceDeLaColumnaQueTieneLaFecha=obtenerIndiceColumna(sheetOriginal,WConstant.FECHA_OPERACION);
+			max = sheetOriginal.getPhysicalNumberOfRows();
+			
+			llenarSheetConSOLOOperacionesDeOtroSheet(sheetOriginal,primeraHoja,max,indiceDeLaColumnaQueTieneLaFecha);
+			
+			
+		}catch (Exception e) {
+			throw new Exception ("error en : convertirExcelAExcelDeSoloOperaciones "+e.getMessage());
+		}
+		
+		return excelFiltrado;
+	}
+	
+	private void llenarSheetConSOLOOperacionesDeOtroSheet(Sheet sheetOriginal, Sheet sheetConSoloOperaciones, int max, int indiceDeLaColumnaQueTieneLaFecha) {
+		
+		Row rowSheetOriginal=null;
+		boolean algunaOperacionNOseaNullaOTengaLaCeldaDeFechaVacia=false;
+		int i=0;
+		FormulaEvaluator formulaEvaluator = sheetOriginal.getWorkbook().getCreationHelper().createFormulaEvaluator();
+		
+		while (i<max && !algunaOperacionNOseaNullaOTengaLaCeldaDeFechaVacia) {
+			rowSheetOriginal = sheetOriginal.getRow(i);
+			if(rowSheetOriginal!=null) {
+				algunaOperacionNOseaNullaOTengaLaCeldaDeFechaVacia=chequearFecha(rowSheetOriginal.getCell(indiceDeLaColumnaQueTieneLaFecha));
+				if(!algunaOperacionNOseaNullaOTengaLaCeldaDeFechaVacia) {
+					agregarRowAUnSheet(sheetConSoloOperaciones,rowSheetOriginal,i,formulaEvaluator);
+				}
+			} else {
+				algunaOperacionNOseaNullaOTengaLaCeldaDeFechaVacia=true;
+			}
+			i++;
+		}
+	}
+	
+	private void agregarRowAUnSheet(Sheet sheetConSoloOperaciones, Row rowSheetOriginal,int posRow,FormulaEvaluator formulaEvaluatorParam) {
+		
+		Row rowRecientementeCreada= sheetConSoloOperaciones.createRow(posRow);
+		Cell cellRecientementeCreadaLaCualDebeSerLlenada = null;
+		Cell celdaActual=null;
+		int max = rowSheetOriginal.getPhysicalNumberOfCells();
+		 // Obtener el objeto FormulaEvaluator para evaluar las fórmulas
+	    FormulaEvaluator formulaEvaluator = formulaEvaluatorParam;
+		
+		
+		for (int pos=0;pos<max;pos++) {
+			celdaActual= rowSheetOriginal.getCell(pos);
+			cellRecientementeCreadaLaCualDebeSerLlenada = rowRecientementeCreada.createCell(pos);
+			
+			 if (celdaActual != null) {
+		            switch (celdaActual.getCellType()) {
+		                case NUMERIC:
+		                    // Copiar valor numérico
+		                    cellRecientementeCreadaLaCualDebeSerLlenada.setCellValue(celdaActual.getNumericCellValue());
+		                    break;
+		                case STRING:
+		                    // Copiar valor de texto
+		                    cellRecientementeCreadaLaCualDebeSerLlenada.setCellValue(celdaActual.getStringCellValue());
+		                    break;
+		                case BOOLEAN:
+		                    // Copiar valor booleano
+		                    cellRecientementeCreadaLaCualDebeSerLlenada.setCellValue(celdaActual.getBooleanCellValue());
+		                    break;
+		                case FORMULA:
+		                	// Evaluar la fórmula y obtener su resultado
+		                    // Usar FormulaEvaluator para obtener el valor calculado
+		                    CellValue cellValue = formulaEvaluator.evaluate(celdaActual);
+
+		                    // Dependiendo del tipo de la fórmula, obtener el valor calculado
+		                    switch (cellValue.getCellType()) {
+		                        case NUMERIC:
+		                            cellRecientementeCreadaLaCualDebeSerLlenada.setCellValue(cellValue.getNumberValue());
+		                            break;
+		                        case STRING:
+		                            cellRecientementeCreadaLaCualDebeSerLlenada.setCellValue(cellValue.getStringValue());
+		                            break;
+		                        case BOOLEAN:
+		                            cellRecientementeCreadaLaCualDebeSerLlenada.setCellValue(cellValue.getBooleanValue());
+		                            break;
+		                        default:
+		                            break;
+		                    }
+		                    break;
+		                default:
+		                    // No hacer nada si es un tipo desconocido
+		                    break;
+		            }}
+			
+		}
+	}
+	
+	private boolean chequearFecha (Cell cell) {
+		boolean check=false;
+		
+		if(cell==null) {
+			check=true;
+		}else if(cell.getCellType()== CellType.BLANK  || cell.getCellType()== CellType.BOOLEAN|| cell.getCellType()== CellType.FORMULA || cell.getCellType()== CellType._NONE  ) {
+			check=true;
+		}
+		
+		
+		return check;
+	}
+	
+	private void eliminarRowsPorAlgunCriterioBasadoEnUnaColumna(Workbook wb, String nombreDeLaColumna,String palabraBuscada,LinkedList<Row>filasElimnadas) {
+		Sheet sheet = wb.getSheetAt(0);
+		int indiceColumna = obtenerIndiceColumna(sheet,nombreDeLaColumna);
+		int max = sheet.getPhysicalNumberOfRows();
+		Cell cell=null;
+		int dondeInicianLasOperaciones=1;
+		Row row=null;
+		
+		
+		
+		for (int i =dondeInicianLasOperaciones;i<=max;i++) {
+			try {
+				row = sheet.getRow(i);
+				cell= row.getCell(indiceColumna);
+		
+			    String textoCelda = cell.getStringCellValue().trim();
+			    
+			    if(textoCelda.equalsIgnoreCase(palabraBuscada)) {
+			    	filasElimnadas.add(row);
+			    }
+
+			}catch (Exception e) {
+				System.out.println("error en eliminarRowsPorAlgunCriterioBasadoEnUnaColumna : "+e.getMessage());
+			}
+		}
+		
+		eliminarRowDeUnSheet(sheet,filasElimnadas);
+		
+			
+	}
+	
+	private void eliminarRowDeUnSheet (Sheet sheet,LinkedList<Row>filasElimnadas) {
+		try {
+			for(Row row:filasElimnadas) {
+				sheet.removeRow(row);
+			}
+		}catch (Exception e) {
+			System.out.println("error en eliminarRowDeUnSheet :"+e.getMessage());
+		}
+		
+	}
+	
+	
 	private byte[] comparacionParaTomarInversiones(byte[] contextoReporte, byte[] alycReporte, Alyc alyc,
 			AlycsEnum alycEnum) {
 
@@ -1095,6 +1363,8 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 				}
 
 				System.out.println(rowOutput.toString().trim()); // Imprime la fila completa como una línea
+			}else {
+				System.out.println("la ROW es null");
 			}
 		}
 	}
@@ -1115,26 +1385,29 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 		for (Row row : sheet) {
 
-			if (row.getRowNum() != 0) {
-				try {
-					Cell cell = row.getCell(posColumna);
+			if(row !=null) {
+				if (row.getRowNum() != 0 ) {
+					try {
+						Cell cell = row.getCell(posColumna);
 
-					if (cell.getCellType() == CellType.STRING) {
-						valorCelda = cell.getStringCellValue();
-					} else if (cell.getCellType() == CellType.NUMERIC) {
-						valorCelda = String.valueOf(cell.getNumericCellValue());
+						if (cell.getCellType() == CellType.STRING) {
+							valorCelda = cell.getStringCellValue();
+						} else if (cell.getCellType() == CellType.NUMERIC) {
+							valorCelda = String.valueOf(cell.getNumericCellValue());
+						}
+
+						valorCelda = valorCelda.trim().replace("$", "").replace(".", "").replace(",", ".").replace("€", "");
+
+						Double precioNormalizado = Double.parseDouble(valorCelda);
+						cell.setCellValue(precioNormalizado);
+
+					} catch (Exception e) {
+						System.out.println("ERROR en (normalizarPreciosPorColumna) : " + e.getMessage());
 					}
 
-					valorCelda = valorCelda.trim().replace("$", "").replace(".", "").replace(",", ".").replace("€", "");
-
-					Double precioNormalizado = Double.parseDouble(valorCelda);
-					cell.setCellValue(precioNormalizado);
-
-				} catch (Exception e) {
-					System.out.println("ERROR en (normalizarPreciosPorColumna) : " + e.getMessage());
 				}
-
 			}
+			
 
 		}
 
@@ -1417,22 +1690,27 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 
 		Row headerRow = sheet.getRow(0);
 		int cellIndex = 0;
-		int numeroDeCeldas = headerRow.getPhysicalNumberOfCells();
 		int indiceBuscado = -1;
+		
+		try {
+			int numeroDeCeldas = headerRow.getPhysicalNumberOfCells();
 
-		while (cellIndex < numeroDeCeldas && indiceBuscado == -1) {
-			Cell cell = headerRow.getCell(cellIndex);
-			String headerName = formatter.formatCellValue(cell);
+			while (cellIndex < numeroDeCeldas && indiceBuscado == -1) {
+				Cell cell = headerRow.getCell(cellIndex);
+				String headerName = formatter.formatCellValue(cell);
 
-			if (nombreColumna.trim().equalsIgnoreCase(headerName.trim())) {
-				indiceBuscado = cell.getColumnIndex();
+				if (nombreColumna.trim().equalsIgnoreCase(headerName.trim())) {
+					indiceBuscado = cell.getColumnIndex();
+				}
+
+				cellIndex++;
 			}
-
-			cellIndex++;
+		}catch (Exception e) {
+			System.out.println("error en obtenerIndiceColumna"+e.getMessage());
 		}
+		
 
-		if (indiceBuscado == -1)
-			throw new RuntimeException("No se encontró la columna '" + nombreColumna + "' en el reporte.");
+		if (indiceBuscado == -1)throw new RuntimeException("No se encontró la columna '" + nombreColumna + "' en el reporte.");
 
 		return indiceBuscado;
 	}

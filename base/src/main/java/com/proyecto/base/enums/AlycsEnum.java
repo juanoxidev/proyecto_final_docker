@@ -3,7 +3,7 @@ package com.proyecto.base.enums;
 public enum AlycsEnum {
 
 	TOMARINVERSIONES("Tomar Inversiones",true),
-	NACIONBURSATIL("Nacion Bursatil",false),
+	NACIONBURSATIL("Nacion Bursatil",true),
 	CONOSUR("Conosur",false),
 	COCOSCAPITAL("Cocos Capital",false),
 	ALLARIA ("Allaria",false),
