@@ -24,10 +24,12 @@ public class LinkedHashMapDeOperaciones {
 		System.out.println("MOSTRANDO EL MAP");
 		System.out.println("MOSTRANDO EL MAP");
 		System.out.println("MOSTRANDO EL MAP");
+		int i=0;
 
 		for (LocalDate key : operaciones.keySet()) {
 			System.out.println("Clave: " + key + ", Valor: " + operaciones.get(key));
-
+            i++;
+			System.out.println("nro de lista: "+i);
 			operaciones.get(key).mostrarOperacionesInternas();
 
 		}

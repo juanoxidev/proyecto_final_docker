@@ -187,6 +187,7 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			eliminarRowsPorAlgunCriterioBasadoEnUnaColumna(AlycExcelConSoloOperaciones,NacionBursatilEnum.NacionBursatil.getTipoDeOperacion(),NacionBursatilEnum.NacionBursatil.getPalabraBuscada(),filasDeCaucionesDelAlyc);
 			adaptarFechasAFormatoEstandarDeSerNecesario(AlycExcelConSoloOperaciones, año);
 			convertirLasFechasAlFormatoDate(AlycExcelConSoloOperaciones.getSheetAt(0));
+			//normalizarPrecios(AlycExcelConSoloOperaciones);
 			
 			/*System.out.println("---------------------");
 			System.out.println("---------------------");
@@ -204,16 +205,52 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			alycOperacionesMap.mostrarHashMap();
 			System.out.println("---------------------------------------");
 			
+			System.out.println(" COMPARANDO LOS REPORTES");
+			System.out.println(" COMPARANDO LOS REPORTES");
+			System.out.println(" COMPARANDO LOS REPORTES");
+			System.out.println(" COMPARANDO LOS REPORTES");
+
+			// se comparan los reportes y se eliman las coincidencias, solo quedaran las
+			// disparariedades en cada reporte respectivo (ROJAS)
+
+			// aca se separan las verdes Claras de las ROJAS, las operaciones que queden en
+			// los maps son "ROJAS"
+			compararOperaciones(contextoOperacionesMap, alycOperacionesMap, contextoOperacionesVERDES,alycOperacionesVERDES);
+
+			// aca se separan de las operaciones "ROJAS" en verdeOscuro
+			separarOperacionesRojasEnCeleste(contextoOperacionesMap, alycOperacionesMap, contextoVerderOscuro,alycVerdeOscuro);
+
+			// aca se separan las operaciones "ROJAS" en amarillas
+			separarOperacionesRojasEnAMARILLAS(contextoOperacionesMap, alycOperacionesMap, contextoAmarillas,alycAmarillas);
+
+			System.out.println(" GENERAR EXCEL CON DISPARIEDADES");
+			System.out.println(" GENERAR EXCEL CON DISPARIEDADES");
+			System.out.println(" GENERAR EXCEL CON DISPARIEDADES");
+
+			segundoFiltradoDeOperacionesAmarillasPorSiAlgunaEsOperacionVerde(contextoAmarillas,alycAmarillas,contextoOperacionesVERDES,alycOperacionesVERDES,contextoVerderOscuro,alycVerdeOscuro);
+
+			// se recorren las disparariedades correspondientes y se agregan a un excel
+			// final
+
+			// debes llenar el excel con las ROJAS y las que son "amrrillas" deberian ir a
+			// otra lista aparte, para alyc y para coontext
+
+			// se crea y se llena el excel con las operaciones ROJAS
+			excelFinalConLasDispariedades = generarExcelConLasDisparidades(contextoOperacionesMap, alycOperacionesMap,alycEnum);
+
+			llenarExcelConlasOperacionesQueCoinciden(excelFinalConLasDispariedades, contextoOperacionesVERDES,alycOperacionesVERDES);
+			
+			llenarExcelConlasOperacionesAMARILLAS(excelFinalConLasDispariedades, contextoAmarillas, alycAmarillas);
+			
+			llenarExcelConlasOperacionesVerdesOscuras(excelFinalConLasDispariedades, contextoVerderOscuro,alycVerdeOscuro, contextoOperacionesVERDES.size());
+
+			
+
+			ExcelFINAL = convertirAVectorDeBytes(excelFinalConLasDispariedades);
 			
 			
 			
-			
-			
-			
-			
-			
-			
-            ExcelFINAL = convertirAVectorDeBytes(AlycExcelConSoloOperaciones);
+            //ExcelFINAL = convertirAVectorDeBytes(AlycExcelConSoloOperaciones);
 			
 			return ExcelFINAL;
 			

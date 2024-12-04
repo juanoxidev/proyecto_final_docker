@@ -81,7 +81,10 @@ public class ListaEnlazadaDeOperaciones extends LinkedList<OperacionReporteDTO> 
 	}
 
 	public void mostrarOperacionesInternas() {
+		int i=0;
 		for (OperacionReporteDTO element : this) {
+			i++;
+			System.out.println("numero de operacion : "+i);
 			System.out.println(element);
 		}
 	}
