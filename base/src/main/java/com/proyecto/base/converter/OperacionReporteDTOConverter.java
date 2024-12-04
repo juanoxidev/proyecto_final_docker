@@ -34,24 +34,28 @@ public class OperacionReporteDTOConverter {
 			System.out.println("El HashMap está vacío.");
 		} else {
 			System.out.println("El HashMap no está vacío.");
+			
+			System.out.println("----------------------");
+			for (String clave : encabezado.keySet()) { 
+				Integer valor = encabezado.get(clave);
+				 System.out.println("Clave: " + clave + ", Valor: " + valor); }
+			
 		}
 
-		/*
-		 * System.out.println("----------------------"); for (String clave :
-		 * encabezado.keySet()) { Integer valor = encabezado.get(clave);
-		 * System.out.println("Clave: " + clave + ", Valor: " + valor); }
-		 */
+		
+		  
+		 
 
 		// se llaman a metodos internos para hacer las validaciones pertinentes
-		// System.out.println("'getStringCellValue'");
+		 System.out.println("'getStringCellValue'");
 		operacion.setEspecie(getStringCellValue(row, encabezado.get(WConstant.ESPECIE)));
-		// System.out.println("'getLocalDateCellValue'");
+		 System.out.println("'getLocalDateCellValue'");
 		operacion.setFecha(getLocalDateCellValue(row, encabezado.get(WConstant.FECHA_OPERACION)));
-		// System.out.println("'getNumericCellValue'");
+		 System.out.println("'getNumericCellValue'");
 		operacion.setCantidadVN(getNumericCellValue(row, encabezado.get(WConstant.CANTIDAD_V_N), 0));
-		// System.out.println("'getNumericCellValue'");
+		 System.out.println("'getNumericCellValue'");
 		operacion.setPrecioMesa(getNumericCellValue(row, encabezado.get(WConstant.PRECIO_MESA), 0.0));
-		// System.out.println("'getNumericCellValue'");
+		 System.out.println("'getNumericCellValue'");
 		operacion.setPrecioCliente(getNumericCellValue(row, encabezado.get(WConstant.PRECIO_CLIENTE), 0.0));
 
 		return operacion;

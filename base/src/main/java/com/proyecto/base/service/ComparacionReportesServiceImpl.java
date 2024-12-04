@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -15,6 +16,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CellValue;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FillPatternType;
@@ -168,11 +170,39 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			ConverterAFormatoEstandar.cambiarNombreColumnas(alycWorkbook,alyc.getPlantilla());
 			
 			AlycExcelConSoloOperaciones= convertirExcelAExcelDeSoloOperaciones(alycWorkbook.getSheetAt(0));
-			AlycExcelConSoloOperaciones = estandarizarReporte(AlycExcelConSoloOperaciones, alyc.getPlantilla(), año, alyc);
-			eliminarRowsPorAlgunCriterioBasadoEnUnaColumna(AlycExcelConSoloOperaciones,NacionBursatilEnum.NacionBursatil.getTipoDeOperacion(),NacionBursatilEnum.NacionBursatil.getPalabraBuscada(),filasDeCaucionesDelAlyc);
-
 			
+			/*System.out.println("iterarSheetV1");
 			iterarSheet(AlycExcelConSoloOperaciones.getSheetAt(0));
+			
+			System.out.println("---------------------");
+			System.out.println("---------------------");
+			System.out.println("---------------------");
+			System.out.println("ANTES DE SACAR LAS CAUCIONES");
+			System.out.println("iterarSheetV2");
+			iterarSheetV2(AlycExcelConSoloOperaciones.getSheetAt(0));
+			
+			
+			System.out.println("aplicando los filtrados ");*/
+			//AlycExcelConSoloOperaciones = estandarizarReporte(AlycExcelConSoloOperaciones, alyc.getPlantilla(), año, alyc);
+			eliminarRowsPorAlgunCriterioBasadoEnUnaColumna(AlycExcelConSoloOperaciones,NacionBursatilEnum.NacionBursatil.getTipoDeOperacion(),NacionBursatilEnum.NacionBursatil.getPalabraBuscada(),filasDeCaucionesDelAlyc);
+			adaptarFechasAFormatoEstandarDeSerNecesario(AlycExcelConSoloOperaciones, año);
+			convertirLasFechasAlFormatoDate(AlycExcelConSoloOperaciones.getSheetAt(0));
+			
+			/*System.out.println("---------------------");
+			System.out.println("---------------------");
+			System.out.println("---------------------");
+			System.out.println("DESPUES DE SACAR LAS CAUCIONES");
+			System.out.println("iterarSheetV1");
+			iterarSheet(AlycExcelConSoloOperaciones.getSheetAt(0));
+			
+			System.out.println("iterarSheetV2");
+			iterarSheetV2(AlycExcelConSoloOperaciones.getSheetAt(0));*/
+			
+			System.out.println("---------------------------------------");
+			// se meten los datos del AlycExcelModificado a un map
+			alycOperacionesMap = procesarReporteV2(AlycExcelConSoloOperaciones);
+			alycOperacionesMap.mostrarHashMap();
+			System.out.println("---------------------------------------");
 			
 			
 			
@@ -211,6 +241,45 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		return ExcelFINAL;
 	}
 	
+	
+	private void convertirLasFechasAlFormatoDate (Sheet sheet) {
+		int indiceFechaColumna = obtenerIndiceColumna(sheet,WConstant.FECHA_OPERACION);
+		Cell cell=null;
+		for(Row row: sheet) {
+			cell = row.getCell(indiceFechaColumna);
+			if(cell!=null) {
+				convertirLaCeldaDeFechaADate(cell);
+			}
+			
+		}
+	}
+	
+	private void convertirLaCeldaDeFechaADate(Cell cell) {
+	    // Verifica si la celda tiene un valor numérico que podría ser una fecha
+	    if (cell.getCellType() == CellType.NUMERIC) {
+	        double cellValue = cell.getNumericCellValue();
+
+	        // Si la celda es un número de serie de fecha (Excel usa números para fechas)
+	        if (cellValue > 0) {  // Asegúrate de que es un valor positivo y plausible para una fecha.
+	            // Crea un estilo de celda para formatearla como fecha
+	            CellStyle dateCellStyle = cell.getSheet().getWorkbook().createCellStyle();
+	            CreationHelper createHelper = cell.getSheet().getWorkbook().getCreationHelper();
+	            dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/MM/yyyy"));
+	            
+	            // Aplica el formato de fecha a la celda
+	            cell.setCellStyle(dateCellStyle);
+
+	            // Ahora, Apache POI reconocerá que la celda está formateada como fecha
+	        }
+	    }
+
+	    // Después de aplicar el formato de fecha, ahora entraremos en el bloque if correctamente
+	    /*if (DateUtil.isCellDateFormatted(cell)) {
+	        // La celda contiene una fecha
+	        System.out.println("DETECTO COMO: NUMERIC (Fecha)");
+	        System.out.println("Fecha: " + dateFormat.format(cell.getDateCellValue()));
+	    }*/
+	}
 	
 	private Workbook convertirExcelAExcelDeSoloOperaciones(Sheet sheetOriginal) throws Exception {
 		Workbook excelFiltrado= new XSSFWorkbook();
@@ -1368,6 +1437,54 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 			}
 		}
 	}
+	
+	private void iterarSheetV2(Sheet sheet) {
+		System.out.println("Iterando el sheet V2 V2 V2 V2...");
+
+		// Formateador de fecha
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yy");
+
+		for (Row row : sheet) {
+			if (row != null) {
+				StringBuilder rowOutput = new StringBuilder();
+
+				Cell cell = row.getCell(0);
+				
+					if (cell == null || cell.getCellType() == CellType.BLANK) {
+						System.out.println("DETECTO COMO: NULL O BLANK");
+					} else {
+						switch (cell.getCellType()) {
+						case NUMERIC:
+	                        	// Verificamos si el valor numérico podría ser una fecha
+	                            double numericValue = cell.getNumericCellValue();
+	                    
+	                            System.out.println("DETECTO COMO: NUMERIC OBLIGADO");
+	                            System.out.println("numero normal detectado aqui " + numericValue);
+	                        
+							break;
+						case STRING:
+							System.out.println("DETECTO COMO: STRING");
+							 System.out.println("Contenido: " + cell.getStringCellValue());
+							break;
+						case BOOLEAN:
+							System.out.println("DETECTO COMO: BOOLEAN");
+							break;
+						case FORMULA:
+							System.out.println("DETECTO COMO: FORMULA");
+							break;
+						default:
+							rowOutput.append("?\t"); // Para otros tipos desconocidos
+							break;
+						}
+					}
+				
+
+				System.out.println(rowOutput.toString().trim()); // Imprime la fila completa como una línea
+			}else {
+				System.out.println("la ROW es null");
+			}
+		}
+	}
 
 	private void normalizarPrecios(Workbook workbook) throws Exception {
 		Sheet sheet = workbook.getSheetAt(primeraHoja);
@@ -1621,10 +1738,51 @@ public class ComparacionReportesServiceImpl implements ComparacionReportesServic
 		
 		for (int i = posicionDondeArrancanLasOperaciones; i <= sheet.getLastRowNum(); i++) {
 
+			System.out.println("el : "+i);
 			Row row = sheet.getRow(i);
 			if (row != null) {
 				OperacionReporteDTO operacion = OperacionReporteDTOConverter.rowToDTO(row, encabezado);
 				operacionesMap.agregar(operacion); // Usar el método agregar de LinkedHashMapDeOperaciones
+			}
+		}
+
+		return operacionesMap;
+	}
+	
+	
+	private LinkedHashMapDeOperaciones procesarReporteV2(Workbook reportePath) throws IOException {
+
+		if (reportePath == null)
+			throw new IOException("no se puede ejecutar 'procesarReporte(Workbook)' porque lo que se recibio es null");
+
+		Sheet sheet = reportePath.getSheetAt(primeraHoja);
+		System.out.println(" EJECUTANDO METODO 'procesarReporte'  ");
+		return convertirSheetAMapV2(sheet);
+	}
+	
+	private LinkedHashMapDeOperaciones convertirSheetAMapV2(Sheet sheet) {
+
+		LinkedHashMapDeOperaciones operacionesMap = new LinkedHashMapDeOperaciones();
+		System.out.println(" EJECUTANDO METODO 'convertirSheetAMap' 1 ");
+		HashMap<String, Integer> encabezado = getEncabezado(sheet);
+		System.out.println(" EJECUTANDO METODO 'convertirSheetAMap' 2 ");
+
+		System.out.println(" EJECUTANDO METODO 'convertirSheetAMap'  bucle ");
+		int posicionDondeArrancanLasOperaciones=1;
+		
+		for (int i = posicionDondeArrancanLasOperaciones; i <= sheet.getLastRowNum(); i++) {
+
+			System.out.println("el : "+i);
+			Row row = sheet.getRow(i);
+			if (row != null) {
+				try {
+					OperacionReporteDTO operacion = OperacionReporteDTOConverter.rowToDTO(row, encabezado);
+					operacionesMap.agregar(operacion); // Usar el método agregar de LinkedHashMapDeOperaciones
+				}catch(Exception e) {
+					System.out.println("error en convertirSheetAMapV2 ("+i+") : traza:"+e.getMessage());
+					System.out.println("LA TRAZA BIEN : "+e.getStackTrace());
+				}
+				
 			}
 		}
 
